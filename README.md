@@ -12,3 +12,5 @@ Change Logs
 
 ScreenShots
 ----------------------
+
+![Media Browser](/../screenshot/screenshots/device-2014-07-30-131458.png?raw=true "Media Browser")

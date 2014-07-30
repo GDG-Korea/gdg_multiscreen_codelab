@@ -1,0 +1,37 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/defaultPadding"
+    >
+
+    <ImageView
+        android:id="@+id/movie_thumbnail"
+        android:layout_centerVertical="true"
+        android:layout_width="@dimen/touchTarget"
+        android:layout_height="@dimen/touchTarget"
+        android:layout_marginRight="@dimen/defaultPadding"
+        android:layout_marginBottom="@dimen/defaultPadding"
+        />
+
+    <TextView
+        android:id="@+id/movie_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/baseline_grid"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@id/movie_thumbnail"
+        android:textSize="@dimen/subheadFont"
+        android:maxLines="1"
+        android:ellipsize="end"/>
+
+    <TextView
+        android:id="@+id/movie_descritpion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/movie_thumbnail"
+        android:layout_below="@id/movie_title"
+        android:maxLines="3"
+        android:ellipsize="end"
+        android:textSize="@dimen/bodyFont"/>
+
+</RelativeLayout>

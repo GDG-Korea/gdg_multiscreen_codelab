@@ -31,10 +31,14 @@ public class MovieListActivity extends Activity
      */
     private boolean mTwoPane;
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie_list);
+
+
 
         if (findViewById(R.id.movie_detail_container) != null) {
             // The detail container view will be present only in the

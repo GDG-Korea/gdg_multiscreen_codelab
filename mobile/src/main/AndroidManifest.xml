@@ -20,7 +20,7 @@
         <activity
             android:name=".PlayerActivity"
             android:screenOrientation="landscape"
-            android:theme="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen" />
+            android:theme="@style/AppTheme.Detail" />
         <activity
             android:name=".MovieDetailActivity"
             android:label="@string/title_movie_detail"
@@ -29,6 +29,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MovieListActivity" />
         </activity>
+
+        <meta-data android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
     </application>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>

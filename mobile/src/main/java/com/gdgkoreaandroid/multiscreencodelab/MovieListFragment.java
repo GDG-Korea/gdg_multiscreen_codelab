@@ -1,11 +1,10 @@
 package com.gdgkoreaandroid.multiscreencodelab;
 
 import android.app.Activity;
-import android.os.Bundle;
 import android.app.ListFragment;
+import android.os.Bundle;
 import android.view.View;
 import android.widget.ListView;
-
 
 import com.gdgkoreaandroid.multiscreencodelab.dummy.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.dummy.MovieList;
@@ -146,4 +145,5 @@ public class MovieListFragment extends ListFragment {
 
         mActivatedPosition = position;
     }
+
 }

@@ -1,5 +1,7 @@
 package com.gdgkoreaandroid.multiscreencodelab;
 
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -24,6 +26,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,6 +51,9 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.common.images.WebImage;
+
+import java.io.IOException;
 
 /**
  * A fragment representing a single Movie detail screen.
@@ -62,10 +68,6 @@ public class MovieDetailFragment extends Fragment
 
     private static final int MSG_POST_NOTIFICATIONS = 0;
     private static final long POST_NOTIFICATIONS_DELAY_MS = 200;
-
-    /**
-     * The dummy content this fragment is presenting.
-     */
 
     private Handler mHandler;
 
@@ -82,12 +84,13 @@ public class MovieDetailFragment extends Fragment
     private ConnectionStatusListener mConnectionStatusListener;
     private RemoteMediaPlayer mRemotePlayer;
 
+    private int mPlayerStatus = MediaStatus.PLAYER_STATE_IDLE;
     private boolean mApplicationStarted = false;
 
-    /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
-     */
+    ImageView play;
+    View darkLayer;
+    ProgressBar loadProgress;
+
     public MovieDetailFragment() {
     }
 
@@ -98,25 +101,23 @@ public class MovieDetailFragment extends Fragment
         mMediaRouter = MediaRouter.getInstance(getActivity().getApplicationContext());
         mMediaRouteCallback = new MediaRouteCallback();
         mConnectionStatusListener = new ConnectionStatusListener();
-        mRemotePlayer = new RemoteMediaPlayer();
 
         setHasOptionsMenu(true);
 
         if (getArguments().containsKey(MovieList.ARG_ITEM_ID)) {
-            // Load the dummy content specified by the fragment
-            // arguments. In a real-world scenario, use a Loader
-            // to load content from a content provider.
             long id = getArguments().getLong(MovieList.ARG_ITEM_ID);
             mMovie = MovieList.getMovie(id);
         }
-
-
     }
 
     @Override
     public void onResume() {
         super.onResume();
         updateNotifications(false /* cancelExisting */);
+        if(mApiClient!=null && mApiClient.isConnected()) {
+            attachMediaPlayer();
+            mRemotePlayer.requestStatus(mApiClient);
+        }
     }
 
     @Override
@@ -126,7 +127,6 @@ public class MovieDetailFragment extends Fragment
 
         mHandler = new Handler(this);
 
-        // Show the dummy content as text in a TextView.
         if (mMovie != null) {
 
             final ImageView thumbnail = (ImageView) rootView.findViewById(R.id.movie_detail_thumb);
@@ -134,7 +134,9 @@ public class MovieDetailFragment extends Fragment
             TextView title = (TextView) rootView.findViewById(R.id.movie_detail_title);
             TextView meta = (TextView) rootView.findViewById(R.id.movie_detail_meta);
             TextView description = (TextView) rootView.findViewById(R.id.movie_detail_descritpion);
-            ImageView play = (ImageView) rootView.findViewById(R.id.movie_detail_play);
+            play = (ImageView) rootView.findViewById(R.id.movie_detail_play);
+            darkLayer = rootView.findViewById(R.id.movie_detail_layer);
+            loadProgress = (ProgressBar) rootView.findViewById(R.id.movie_detail_progress);
 
             View thumbContainer = rootView.findViewById(R.id.movie_detail_thumb_container);
 
@@ -172,6 +174,7 @@ public class MovieDetailFragment extends Fragment
     public void onStop() {
         super.onStop();
         stopDiscovery();
+        detachMediaPlayer();
     }
 
     private final View.OnClickListener mOnPlayVideoHandler = new View.OnClickListener() {
@@ -187,27 +190,41 @@ public class MovieDetailFragment extends Fragment
 
                 v.getContext().startActivity(intent);
             } else {
-                // Play video on via cast device
-                MediaMetadata metadata = new MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE);
-                metadata.putString(MediaMetadata.KEY_TITLE, mMovie.getTitle());
-                metadata.putString(MediaMetadata.KEY_STUDIO, mMovie.getStudio());
+                // Play video on the cast device
+                switch (mPlayerStatus) {
+                    case MediaStatus.PLAYER_STATE_IDLE:
+                        attachMediaPlayer();
 
-                MediaInfo info = new MediaInfo.Builder(mMovie.getVideoUrl())
-                        .setMetadata(metadata)
-                        .setContentType("video/mp4")
-                        .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED).build();
+                        MediaMetadata metadata = new MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE);
+                        metadata.putString(MediaMetadata.KEY_TITLE, mMovie.getTitle());
+                        metadata.putString(MediaMetadata.KEY_STUDIO, mMovie.getStudio());
+                        metadata.addImage(new WebImage(Uri.parse(mMovie.getCardImageUrl())));
 
-                mRemotePlayer.load(mApiClient, info, true)
-                        .setResultCallback(new ResultCallback<RemoteMediaPlayer.MediaChannelResult>() {
-                    @Override
-                    public void onResult(RemoteMediaPlayer.MediaChannelResult mediaChannelResult) {
-                        if(!mediaChannelResult.getStatus().isSuccess()){
-                            Toast.makeText(getActivity().getApplicationContext(),
-                                    "Failed to play", Toast.LENGTH_SHORT).show();
-                        }
+                        MediaInfo info = new MediaInfo.Builder(mMovie.getVideoUrl())
+                                .setMetadata(metadata)
+                                .setContentType("video/mp4")
+                                .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED).build();
 
-                    }
-                });
+                        mRemotePlayer.load(mApiClient, info, true)
+                            .setResultCallback(new ResultCallback<RemoteMediaPlayer.MediaChannelResult>() {
+                                @Override
+                                public void onResult(RemoteMediaPlayer.MediaChannelResult mediaChannelResult) {
+                                    if (!mediaChannelResult.getStatus().isSuccess()) {
+                                        Toast.makeText(getActivity().getApplicationContext(),
+                                                "Failed to play", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+                        break;
+
+                    case MediaStatus.PLAYER_STATE_PAUSED:
+                        mRemotePlayer.play(mApiClient);
+                        break;
+
+                    case MediaStatus.PLAYER_STATE_PLAYING:
+                        mRemotePlayer.pause(mApiClient);
+                        break;
+                }
             }
         }
     };
@@ -300,6 +317,35 @@ public class MovieDetailFragment extends Fragment
                 MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
     }
 
+    private void attachMediaPlayer() {
+        if (mRemotePlayer!=null) {
+            return;
+        }
+
+        mRemotePlayer = new RemoteMediaPlayer();
+        mRemotePlayer.setOnStatusUpdatedListener(MovieDetailFragment.this);
+        mRemotePlayer.setOnMetadataUpdatedListener(this);
+
+        try{
+            Cast.CastApi.setMessageReceivedCallbacks(
+                    mApiClient, mRemotePlayer.getNamespace(), mRemotePlayer);
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void detachMediaPlayer() {
+        if(mRemotePlayer!=null && mApiClient !=null) {
+            try {
+                Cast.CastApi.removeMessageReceivedCallbacks(
+                        mApiClient, mRemotePlayer.getNamespace());
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+        mRemotePlayer = null;
+    }
+
     private void stopDiscovery() {
         mMediaRouter.removeCallback(mMediaRouteCallback);
         mMediaRouteSelector = null;
@@ -313,6 +359,7 @@ public class MovieDetailFragment extends Fragment
                     mApiClient.disconnect();
                 }
                 mApplicationStarted = false;
+                mPlayerStatus = MediaStatus.PLAYER_STATE_IDLE;
             }
             mApiClient = null;
         }
@@ -327,15 +374,26 @@ public class MovieDetailFragment extends Fragment
     @Override
     public void onStatusUpdated() {
         MediaStatus status = mRemotePlayer.getMediaStatus();
-        switch(status.getPlayerState()){
+        mPlayerStatus = status.getPlayerState();
+
+        // Set controller visibility according to playback state.
+        switch(mPlayerStatus){
             case MediaStatus.PLAYER_STATE_PLAYING:
-
+                play.setVisibility(View.VISIBLE);
+                play.setImageResource(R.drawable.ic_pause_playcontrol_normal);
+                loadProgress.setVisibility(View.GONE);
                 break;
+
             case MediaStatus.PLAYER_STATE_PAUSED:
-
+            case MediaStatus.PLAYER_STATE_IDLE:
+                play.setVisibility(View.VISIBLE);
+                play.setImageResource(R.drawable.play_button);
+                loadProgress.setVisibility(View.GONE);
                 break;
-            case MediaStatus.PLAYER_STATE_BUFFERING:
 
+            case MediaStatus.PLAYER_STATE_BUFFERING:
+                play.setVisibility(View.GONE);
+                loadProgress.setVisibility(View.VISIBLE);
                 break;
         }
     }
@@ -353,12 +411,16 @@ public class MovieDetailFragment extends Fragment
                     .addOnConnectionFailedListener(mConnectionStatusListener)
                     .build();
             mApiClient.connect();
+
+            darkLayer.setBackgroundColor(Color.parseColor("#66000000"));
         }
 
         @Override
         public void onRouteUnselected(MediaRouter router, MediaRouter.RouteInfo route) {
             super.onRouteUnselected(router, route);
             tearDown();
+
+            darkLayer.setBackgroundColor(Color.parseColor("#00000000"));
         }
     }
 
@@ -377,20 +439,20 @@ public class MovieDetailFragment extends Fragment
         @Override
         public void onConnected(Bundle bundle) {
             Cast.CastApi.launchApplication(mApiClient,
-                    MyApplication.MEDIA_RECEIVER_APPLICATION_ID, false)
+                MyApplication.MEDIA_RECEIVER_APPLICATION_ID, false)
 
-                    .setResultCallback(new ResultCallback<Cast.ApplicationConnectionResult>() {
-                        @Override
-                        public void onResult(Cast.ApplicationConnectionResult applicationConnectionResult) {
-                            Status status = applicationConnectionResult.getStatus();
+                .setResultCallback(new ResultCallback<Cast.ApplicationConnectionResult>() {
+                    @Override
+                    public void onResult(Cast.ApplicationConnectionResult applicationConnectionResult) {
+                        Status status = applicationConnectionResult.getStatus();
 
-                            if (status.isSuccess()) {
-                                mApplicationStarted = true;
-                            } else {
-                                tearDown();
-                            }
+                        if (status.isSuccess()) {
+                            mApplicationStarted = true;
+                        } else {
+                            tearDown();
                         }
-                    });
+                    }
+                });
 
         }
 

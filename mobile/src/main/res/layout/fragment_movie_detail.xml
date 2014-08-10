@@ -1,14 +1,13 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_height="wrap_content"
     android:layout_width="match_parent"
-    >
+    android:layout_height="wrap_content">
+
     <LinearLayout
         android:id="@+id/movie_detail"
-        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
         <RelativeLayout
             android:id="@+id/movie_detail_thumb_container"
@@ -18,18 +17,29 @@
 
             <ImageView
                 android:id="@+id/movie_detail_thumb"
-                android:scaleType="centerInside"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
+                android:layout_height="match_parent"
+                android:scaleType="centerInside" />
+
+            <View
+                android:id="@+id/movie_detail_layer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
 
             <ImageView
                 android:id="@+id/movie_detail_play"
                 android:layout_width="@dimen/touchTarget"
                 android:layout_height="@dimen/touchTarget"
                 android:layout_centerInParent="true"
-                android:src="@drawable/play_button"
                 android:scaleType="fitCenter"
-                />
+                android:src="@drawable/play_button" />
+
+            <ProgressBar
+                android:id="@+id/movie_detail_progress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:visibility="gone" />
 
         </RelativeLayout>
 
@@ -37,34 +47,31 @@
             android:id="@+id/movie_detail_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/titleFont"
-            android:paddingTop="@dimen/halfPadding"
+            android:paddingBottom="@dimen/halfPadding"
             android:paddingLeft="@dimen/defaultPadding"
             android:paddingRight="@dimen/defaultPadding"
-            android:paddingBottom="@dimen/halfPadding"
-            />
+            android:paddingTop="@dimen/halfPadding"
+            android:textSize="@dimen/titleFont" />
 
         <TextView
             android:id="@+id/movie_detail_meta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/bodyFont"
-            android:paddingTop="@dimen/halfPadding"
+            android:paddingBottom="@dimen/halfPadding"
             android:paddingLeft="@dimen/defaultPadding"
             android:paddingRight="@dimen/defaultPadding"
-            android:paddingBottom="@dimen/halfPadding"
-            />
+            android:paddingTop="@dimen/halfPadding"
+            android:textSize="@dimen/bodyFont" />
 
         <TextView
             android:id="@+id/movie_detail_descritpion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/bodyFont"
-            android:paddingTop="@dimen/halfPadding"
+            android:paddingBottom="@dimen/halfPadding"
             android:paddingLeft="@dimen/defaultPadding"
             android:paddingRight="@dimen/defaultPadding"
-            android:paddingBottom="@dimen/halfPadding"
-            />
+            android:paddingTop="@dimen/halfPadding"
+            android:textSize="@dimen/bodyFont" />
 
     </LinearLayout>
 

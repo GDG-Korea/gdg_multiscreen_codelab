@@ -22,9 +22,6 @@ import java.util.List;
  */
 public class MovieBrowseFragment extends BrowseFragment {
 
-    private ArrayObjectAdapter mRowsAdapter;
-    private CardPresenter mCardPresenter;
-
     public MovieBrowseFragment() {
         // Required empty public constructor
     }
@@ -49,11 +46,13 @@ public class MovieBrowseFragment extends BrowseFragment {
     }
 
     private void setupAdapters() {
+
+        //This method should be blank at the first, and be implemented by codelab attendees.
         MovieList.setupMovies();
         List<Movie> list = MovieList.MOVIE_LIST;
 
-        mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-        mCardPresenter = new CardPresenter();
+        ArrayObjectAdapter objectAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+        //CardPresenter cardPresenter = new CardPresenter();
 
         int i;
         for (i = 0; i < 3; i++) {
@@ -61,15 +60,16 @@ public class MovieBrowseFragment extends BrowseFragment {
                 Collections.shuffle(list);
             }
 
-            ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(mCardPresenter);
+            //ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(new CardPresenter());
+            ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(new StringPresenter());
             for (int j = 0; j < list.size(); j++) {
                 listRowAdapter.add(list.get(j));
             }
 
             HeaderItem header = new HeaderItem(i, "CATEGORY:" + (i + 1), null);
-            mRowsAdapter.add(new ListRow(header, listRowAdapter));
+            objectAdapter.add(new ListRow(header, listRowAdapter));
         }
 
-        setAdapter(mRowsAdapter);
+        setAdapter(objectAdapter);
     }
 }

@@ -15,12 +15,11 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.gdgkoreaandroid.multiscreencodelab.util.DummyImageSetter;
 import com.gdgkoreaandroid.multiscreencodelab.MyApplication;
-import com.gdgkoreaandroid.multiscreencodelab.PlayerActivity;
 import com.gdgkoreaandroid.multiscreencodelab.R;
 import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
+import com.gdgkoreaandroid.multiscreencodelab.util.DummyImageSetter;
 
 import java.net.URI;
 
@@ -54,6 +53,7 @@ public class MovieDetailsFragment extends DetailsFragment {
 
     private void setupAdapters() {
 
+        //This method should be blank at the first, and be implemented by codelab attendees.
         DetailsOverviewRowPresenter dorPresenter =
                 new DetailsOverviewRowPresenter(new AbstractDetailsDescriptionPresenter(){
 
@@ -98,8 +98,7 @@ public class MovieDetailsFragment extends DetailsFragment {
     }
 
     protected void updateBackground(URI uri) {
-        Log.d(TAG, "uri" + uri);
-        Log.d(TAG, "metrics" + mMetrics.toString());
+        //This method should be blank at the first, and be implemented by codelab attendees.
 
         MyApplication.getImageDownloaderInstance().downloadImage(
                 uri.toString(), new DummyImageSetter() {

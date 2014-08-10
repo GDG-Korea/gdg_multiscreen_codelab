@@ -1,8 +1,8 @@
 package com.gdgkoreaandroid.multiscreencodelab;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
 
@@ -22,7 +22,7 @@ import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
  * {@link MovieListFragment.Callbacks} interface
  * to listen for item selections.
  */
-public class MovieListActivity extends Activity
+public class MovieListActivity extends ActionBarActivity
         implements MovieListFragment.Callbacks {
 
     /**
@@ -31,14 +31,10 @@ public class MovieListActivity extends Activity
      */
     private boolean mTwoPane;
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie_list);
-
-
 
         if (findViewById(R.id.movie_detail_container) != null) {
             // The detail container view will be present only in the

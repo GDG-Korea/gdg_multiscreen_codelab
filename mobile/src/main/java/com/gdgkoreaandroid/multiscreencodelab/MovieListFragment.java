@@ -6,8 +6,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ListView;
 
-import com.gdgkoreaandroid.multiscreencodelab.dummy.Movie;
-import com.gdgkoreaandroid.multiscreencodelab.dummy.MovieList;
+import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
+import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
 
 import java.util.List;
 

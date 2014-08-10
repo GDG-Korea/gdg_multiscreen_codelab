@@ -1,24 +1,22 @@
-package com.gdgkoreaandroid.multiscreencodelab;
+package com.gdgkoreaandroid.multiscreencodelab.util;
 
 import android.view.View;
 
-/**
- * Created by chansuk on 2014. 8. 10..
- */
-public abstract class AbstractImageSetter implements ImageDownloader.ImageSetter {
+public abstract class DummyImageSetter implements ImageSetter {
 
     @Override
     public void setErrorDrawable() {
-
+        //Do Nothing
     }
 
     @Override
     public void setEmptyDrawable() {
-
+        //Do Nothing
     }
 
     @Override
     public View getTargetView() {
+        //no target view
         return null;
     }
 }

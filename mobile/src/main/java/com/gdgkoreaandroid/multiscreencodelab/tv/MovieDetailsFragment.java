@@ -15,12 +15,12 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.gdgkoreaandroid.multiscreencodelab.AbstractImageSetter;
+import com.gdgkoreaandroid.multiscreencodelab.util.DummyImageSetter;
 import com.gdgkoreaandroid.multiscreencodelab.MyApplication;
 import com.gdgkoreaandroid.multiscreencodelab.PlayerActivity;
 import com.gdgkoreaandroid.multiscreencodelab.R;
-import com.gdgkoreaandroid.multiscreencodelab.dummy.Movie;
-import com.gdgkoreaandroid.multiscreencodelab.dummy.MovieList;
+import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
+import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
 
 import java.net.URI;
 
@@ -74,7 +74,7 @@ public class MovieDetailsFragment extends DetailsFragment {
             @Override
             public void onActionClicked(Action action) {
                 if (action.getId() == ACTION_WATCH_TRAILER) {
-                    Intent intent = new Intent(getActivity(), PlayerActivity.class);
+                    Intent intent = new Intent(getActivity(), TvPlayerActivity.class);
                     intent.putExtra(MovieList.ARG_ITEM_ID, mSelectedMovie.getId());
                     intent.putExtra(getResources().getString(R.string.should_start), true);
                     startActivity(intent);
@@ -102,7 +102,7 @@ public class MovieDetailsFragment extends DetailsFragment {
         Log.d(TAG, "metrics" + mMetrics.toString());
 
         MyApplication.getImageDownloaderInstance().downloadImage(
-                uri.toString(), new AbstractImageSetter() {
+                uri.toString(), new DummyImageSetter() {
 
                     @Override
                     public Bitmap setImageBitmap(Bitmap bitmap) {

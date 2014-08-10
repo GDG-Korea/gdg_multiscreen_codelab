@@ -2,7 +2,6 @@ package com.gdgkoreaandroid.multiscreencodelab.tv;
 
 import android.app.Fragment;
 import android.os.Bundle;
-import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.BrowseFragment;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.HeaderItem;
@@ -10,17 +9,14 @@ import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
 
 import com.gdgkoreaandroid.multiscreencodelab.R;
-import com.gdgkoreaandroid.multiscreencodelab.dummy.Movie;
-import com.gdgkoreaandroid.multiscreencodelab.dummy.MovieList;
+import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
+import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
 
 import java.util.Collections;
 import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link com.gdgkoreaandroid.multiscreencodelab.tv.OnUserInteractionListener} interface
- * to handle interaction events.
  * create an instance of this fragment.
  *
  */

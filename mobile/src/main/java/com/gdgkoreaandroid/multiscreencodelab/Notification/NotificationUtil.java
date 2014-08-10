@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.gdgkoreaandroid.multiscreencodelab.Notification;
+package com.gdgkoreaandroid.multiscreencodelab.notification;
 
 import android.app.PendingIntent;
 import android.content.Context;

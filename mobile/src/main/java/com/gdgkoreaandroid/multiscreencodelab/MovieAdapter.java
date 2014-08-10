@@ -8,7 +8,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.gdgkoreaandroid.multiscreencodelab.dummy.Movie;
+import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
+import com.gdgkoreaandroid.multiscreencodelab.util.ImageDownloader;
 
 import java.util.List;
 

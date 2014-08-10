@@ -27,15 +27,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.gdgkoreaandroid.multiscreencodelab.Notification.ActionsPreset;
-import com.gdgkoreaandroid.multiscreencodelab.Notification.ActionsPresets;
-import com.gdgkoreaandroid.multiscreencodelab.Notification.NotificationIntentReceiver;
-import com.gdgkoreaandroid.multiscreencodelab.Notification.NotificationPreset;
-import com.gdgkoreaandroid.multiscreencodelab.Notification.NotificationPresets;
-import com.gdgkoreaandroid.multiscreencodelab.Notification.PriorityPreset;
-import com.gdgkoreaandroid.multiscreencodelab.Notification.PriorityPresets;
-import com.gdgkoreaandroid.multiscreencodelab.dummy.Movie;
-import com.gdgkoreaandroid.multiscreencodelab.dummy.MovieList;
+import com.gdgkoreaandroid.multiscreencodelab.notification.ActionsPreset;
+import com.gdgkoreaandroid.multiscreencodelab.notification.ActionsPresets;
+import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationIntentReceiver;
+import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationPreset;
+import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationPresets;
+import com.gdgkoreaandroid.multiscreencodelab.notification.PriorityPreset;
+import com.gdgkoreaandroid.multiscreencodelab.notification.PriorityPresets;
+import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
+import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
 
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.CastDevice;

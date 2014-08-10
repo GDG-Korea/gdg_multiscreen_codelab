@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.gdgkoreaandroid.multiscreencodelab.Notification;
+package com.gdgkoreaandroid.multiscreencodelab.notification;
 
 import android.content.Context;
 import android.support.v4.app.NotificationCompat;

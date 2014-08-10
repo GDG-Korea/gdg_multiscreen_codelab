@@ -10,8 +10,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.gdgkoreaandroid.multiscreencodelab.R;
-import com.gdgkoreaandroid.multiscreencodelab.dummy.Movie;
-import com.gdgkoreaandroid.multiscreencodelab.dummy.MovieList;
+import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
+import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
 
 public class TvMovieBrowseActivity extends Activity {
 

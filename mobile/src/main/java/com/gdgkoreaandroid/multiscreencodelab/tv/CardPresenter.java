@@ -11,10 +11,11 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.gdgkoreaandroid.multiscreencodelab.ImageDownloader;
 import com.gdgkoreaandroid.multiscreencodelab.MyApplication;
 import com.gdgkoreaandroid.multiscreencodelab.R;
-import com.gdgkoreaandroid.multiscreencodelab.dummy.Movie;
+import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
+import com.gdgkoreaandroid.multiscreencodelab.util.ImageDownloader;
+import com.gdgkoreaandroid.multiscreencodelab.util.ImageSetter;
 
 import java.net.URI;
 
@@ -47,7 +48,7 @@ public class CardPresenter extends Presenter {
 
         protected void updateCardViewImage(URI uri) {
             ImageDownloader downloader = MyApplication.getImageDownloaderInstance();
-            downloader.downloadImage(uri.toString(), new ImageDownloader.ImageSetter() {
+            downloader.downloadImage(uri.toString(), new ImageSetter() {
 
                 @Override
                 public void setEmptyDrawable() {

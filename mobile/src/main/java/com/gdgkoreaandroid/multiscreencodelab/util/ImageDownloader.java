@@ -1,14 +1,19 @@
-package com.gdgkoreaandroid.multiscreencodelab;
+package com.gdgkoreaandroid.multiscreencodelab.util;
 
+import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.util.LruCache;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
+
+import com.gdgkoreaandroid.multiscreencodelab.R;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -19,18 +24,11 @@ import java.util.concurrent.Executors;
 
 public class ImageDownloader {
 
-    public interface ImageSetter {
-        Bitmap setImageBitmap(final Bitmap bitmap);
-        void setErrorDrawable();
-        void setEmptyDrawable();
-        View getTargetView();
-    }
-
     private Handler mMainUIHandler;
     private ExecutorService mWorkerThreadPool;
     private LruCache<String, Bitmap> mMemoryCache;
 
-    ImageDownloader() {
+    public ImageDownloader() {
         mMainUIHandler = new Handler(Looper.getMainLooper());
         mWorkerThreadPool = Executors.newFixedThreadPool(3);
         mMemoryCache = new LruCache<String, Bitmap>(30);
@@ -69,7 +67,7 @@ public class ImageDownloader {
         }
 
         imageSetter.setEmptyDrawable();
-        final DownloadJob newJob = new DownloadJob(urlStr, imageSetter);
+        final DownloadJob newJob = new DownloadJob(urlStr);
 
         if(targetView != null) {
             targetView.setTag(R.id.download_job, newJob);
@@ -91,7 +89,10 @@ public class ImageDownloader {
                             @Override
                             public void run() {
                                 Bitmap resultBitmap = imageSetter.setImageBitmap(bitmap);
-                                mMemoryCache.put(urlStr, resultBitmap);
+
+                                if(resultBitmap != null) {
+                                    mMemoryCache.put(urlStr, resultBitmap);
+                                }
                             }
                         });
                     }else{
@@ -120,15 +121,19 @@ public class ImageDownloader {
 
     public DownloadJob downloadImage(final String urlStr, final ImageView view){
 
-        SimpleImageSetter imageSetter = new SimpleImageSetter(view);
+        SimpleImageViewSetter imageSetter = new SimpleImageViewSetter(view);
         return downloadImage(urlStr, imageSetter);
     }
 
-    final private class SimpleImageSetter implements ImageSetter {
+    private Bitmap resizeBitmap(Bitmap bitmap, int width, int height) {
+        return Bitmap.createScaledBitmap(bitmap, width, height, true);
+    }
+
+    final private class SimpleImageViewSetter implements ImageSetter {
 
         private final ImageView mView;
 
-        private SimpleImageSetter(ImageView view) {
+        private SimpleImageViewSetter(ImageView view) {
             mView = view;
         }
 
@@ -139,8 +144,42 @@ public class ImageDownloader {
 
         @Override
         public Bitmap setImageBitmap(final Bitmap bitmap) {
+
             final int width = mView.getMeasuredWidth();
             final int height = mView.getMeasuredHeight();
+
+            if(width == 0 || height == 0){
+                //view is not layouted.
+                mView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+
+                    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+                    @Override
+                    public void onGlobalLayout() {
+                        mView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        final int width = mView.getMeasuredWidth();
+                        final int height = mView.getMeasuredHeight();
+
+                        Bitmap resultBitmap = bitmap;
+                        if(bitmap.getWidth() < width || bitmap.getHeight() < height){
+                            //the size of original bitmap is smaller than the target view.
+                            resultBitmap = bitmap;
+                        } else if(bitmap.getWidth() == width && bitmap.getHeight() == height) {
+                            //the size of original bitmap is identical to the target view.
+                            resultBitmap = bitmap;
+                        } else {
+                            Bitmap scaledBitmap = resizeBitmap(bitmap, width, height);
+                            if(scaledBitmap != null) {
+                                bitmap.recycle();
+                                resultBitmap = scaledBitmap;
+                            }
+                        }
+
+                        mView.setImageBitmap(resultBitmap);
+                    }
+                });
+
+                return null;
+            }
 
             Bitmap resultBitmap = bitmap;
             if(bitmap.getWidth() < width || bitmap.getHeight() < height){
@@ -172,17 +211,12 @@ public class ImageDownloader {
         }
     }
 
-    private Bitmap resizeBitmap(Bitmap bitmap, int width, int height) {
-        Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
-        return scaledBitmap;
-    }
-
     public static class DownloadJob {
 
         private String mDownloadURL;
         private boolean mCanceled;
 
-        public DownloadJob(String urlStr, ImageSetter task){
+        public DownloadJob(String urlStr){
             mDownloadURL = urlStr;
         }
 

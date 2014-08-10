@@ -5,10 +5,12 @@
         <!-- Customize your theme here. -->
     </style>
 
-    <style name="AppTheme.FullScreen" parent="AppTheme">
+    <style name="AppTheme.Overlay" parent="AppTheme">
         <!-- Customize your theme here. -->
         <item name="android:windowActionBarOverlay">true</item>
     </style>
+
+    <style name="AppTheme.FullScreen" parent="android:Theme.DeviceDefault.NoActionBar.Overscan"/>
 
 
 </resources>

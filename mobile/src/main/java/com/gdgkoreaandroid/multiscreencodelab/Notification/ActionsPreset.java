@@ -1,4 +1,4 @@
-package com.gdgkoreaandroid.multiscreencodelab.Notification;
+package com.gdgkoreaandroid.multiscreencodelab.notification;
 
 /**
  * Created by FlaShilver on 2014. 8. 10..

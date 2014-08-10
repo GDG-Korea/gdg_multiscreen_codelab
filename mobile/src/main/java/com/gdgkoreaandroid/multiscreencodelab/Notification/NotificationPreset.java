@@ -1,4 +1,4 @@
-package com.gdgkoreaandroid.multiscreencodelab.Notification;
+package com.gdgkoreaandroid.multiscreencodelab.notification;
 
 import android.app.Notification;
 import android.content.Context;

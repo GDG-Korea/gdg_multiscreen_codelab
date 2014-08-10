@@ -1,4 +1,4 @@
-package com.gdgkoreaandroid.multiscreencodelab.dummy;
+package com.gdgkoreaandroid.multiscreencodelab.data;
 
 import java.util.ArrayList;
 import java.util.List;

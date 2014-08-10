@@ -7,6 +7,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.app.Activity;
 import android.support.v4.app.NavUtils;
+import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
 import android.view.Window;
 
@@ -22,7 +23,7 @@ import com.gdgkoreaandroid.multiscreencodelab.dummy.MovieList;
  * This activity is mostly just a 'shell' activity containing nothing
  * more than a {@link MovieDetailFragment}.
  */
-public class MovieDetailActivity extends Activity {
+public class MovieDetailActivity extends ActionBarActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

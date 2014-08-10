@@ -44,4 +44,5 @@
     <string name="basic_example">Basic example</string>
     <string name="example_content_title">Basic example title</string>
     <string name="example_content_text">Basic example text</string>
+    <string name="media_route_menu_title">Cast</string>
 </resources>

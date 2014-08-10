@@ -15,11 +15,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.gdgkoreaandroid.multiscreencodelab.dummy.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.dummy.MovieList;
+import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 
 /**
  * A fragment representing a single Movie detail screen.
@@ -39,6 +45,11 @@ public class MovieDetailFragment extends Fragment {
     private CastDevice mSelectedDevice;
     private MediaRouteCallback mMediaRouteCallback;
 
+    private GoogleApiClient mApiClient;
+    private ConnectionStatusListener mConnectionStatusListener;
+
+    private boolean mApplicationStarted = false;
+
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -52,6 +63,7 @@ public class MovieDetailFragment extends Fragment {
 
         mMediaRouter = MediaRouter.getInstance(getActivity().getApplicationContext());
         mMediaRouteCallback = new MediaRouteCallback();
+        mConnectionStatusListener = new ConnectionStatusListener();
 
         setHasOptionsMenu(true);
 
@@ -110,11 +122,16 @@ public class MovieDetailFragment extends Fragment {
     private final View.OnClickListener mOnPlayVideoHandler = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            // Play a video
-            Intent intent = new Intent(v.getContext(), PlayerActivity.class);
-            intent.putExtra(MovieList.ARG_ITEM_ID, mMovie.getId());
-            intent.putExtra(v.getContext().getString(R.string.should_start), true);
-            v.getContext().startActivity(intent);
+            // If there is no cast device connected, launch video player.
+            if(!mApiClient.isConnected()) {
+                Intent intent = new Intent(v.getContext(), PlayerActivity.class);
+                intent.putExtra(MovieList.ARG_ITEM_ID, mMovie.getId());
+                intent.putExtra(v.getContext().getString(R.string.should_start), true);
+                v.getContext().startActivity(intent);
+            }else{
+                // Play video on via cast device
+                Toast.makeText(getActivity(), "Play via cast", Toast.LENGTH_SHORT).show();
+            }
         }
     };
 
@@ -142,6 +159,20 @@ public class MovieDetailFragment extends Fragment {
         mMediaRouteSelector = null;
     }
 
+    private void tearDown() {
+        if(mApiClient!=null) {
+            if(mApplicationStarted) {
+                if (mApiClient.isConnected()) {
+                    Cast.CastApi.stopApplication(mApiClient);
+                    mApiClient.disconnect();
+                }
+                mApplicationStarted = false;
+            }
+            mApiClient = null;
+        }
+        mSelectedDevice = null;
+    }
+
     private class MediaRouteCallback extends MediaRouter.Callback {
 
         @Override
@@ -149,12 +180,63 @@ public class MovieDetailFragment extends Fragment {
             super.onRouteSelected(router, route);
             mSelectedDevice = CastDevice.getFromBundle(route.getExtras());
 
+            mApiClient = new GoogleApiClient.Builder(getActivity())
+                    .addApi(Cast.API, Cast.CastOptions.builder(mSelectedDevice, mCastClientListener).build())
+                    .addConnectionCallbacks(mConnectionStatusListener)
+                    .addOnConnectionFailedListener(mConnectionStatusListener)
+                    .build();
+            mApiClient.connect();
         }
 
         @Override
         public void onRouteUnselected(MediaRouter router, MediaRouter.RouteInfo route) {
             super.onRouteUnselected(router, route);
-            mSelectedDevice = null;
+            tearDown();
         }
     }
+
+    private Cast.Listener mCastClientListener = new Cast.Listener(){
+
+        @Override
+        public void onApplicationDisconnected(int statusCode) {
+            super.onApplicationDisconnected(statusCode);
+
+        }
+    };
+
+    private class ConnectionStatusListener
+            implements GoogleApiClient.ConnectionCallbacks,
+                       GoogleApiClient.OnConnectionFailedListener {
+        @Override
+        public void onConnected(Bundle bundle) {
+            Cast.CastApi.launchApplication(mApiClient,
+                    MyApplication.MEDIA_RECEIVER_APPLICATION_ID, false)
+
+                    .setResultCallback(new ResultCallback<Cast.ApplicationConnectionResult>() {
+                        @Override
+                        public void onResult(Cast.ApplicationConnectionResult applicationConnectionResult) {
+                            Status status = applicationConnectionResult.getStatus();
+
+                            if(status.isSuccess()){
+                                mApplicationStarted = true;
+                            }else{
+                                tearDown();
+                            }
+                        }
+                    });
+
+        }
+
+        @Override
+        public void onConnectionSuspended(int cause) {
+
+        }
+
+        @Override
+        public void onConnectionFailed(ConnectionResult connectionResult) {
+            Toast.makeText(getActivity().getApplication(), "Failed to connect.", Toast.LENGTH_SHORT).show();
+            tearDown();
+        }
+    }
+
 }

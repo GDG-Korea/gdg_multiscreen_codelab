@@ -33,6 +33,10 @@ import com.gdgkoreaandroid.multiscreencodelab.dummy.MovieList;
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
+import com.google.android.gms.cast.MediaInfo;
+import com.google.android.gms.cast.MediaMetadata;
+import com.google.android.gms.cast.MediaStatus;
+import com.google.android.gms.cast.RemoteMediaPlayer;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
@@ -44,7 +48,10 @@ import com.google.android.gms.common.api.Status;
  * in two-pane mode (on tablets) or a {@link MovieDetailActivity}
  * on handsets.
  */
-public class MovieDetailFragment extends Fragment implements Handler.Callback {
+public class MovieDetailFragment extends Fragment
+        implements RemoteMediaPlayer.OnStatusUpdatedListener,
+                    RemoteMediaPlayer.OnMetadataUpdatedListener,
+                    Handler.Callback {
 
     private static final int MSG_POST_NOTIFICATIONS = 0;
     private static final long POST_NOTIFICATIONS_DELAY_MS = 200;
@@ -66,6 +73,7 @@ public class MovieDetailFragment extends Fragment implements Handler.Callback {
 
     private GoogleApiClient mApiClient;
     private ConnectionStatusListener mConnectionStatusListener;
+    private RemoteMediaPlayer mRemotePlayer;
 
     private boolean mApplicationStarted = false;
 
@@ -83,6 +91,7 @@ public class MovieDetailFragment extends Fragment implements Handler.Callback {
         mMediaRouter = MediaRouter.getInstance(getActivity().getApplicationContext());
         mMediaRouteCallback = new MediaRouteCallback();
         mConnectionStatusListener = new ConnectionStatusListener();
+        mRemotePlayer = new RemoteMediaPlayer();
 
         setHasOptionsMenu(true);
 
@@ -150,7 +159,7 @@ public class MovieDetailFragment extends Fragment implements Handler.Callback {
         @Override
         public void onClick(View v) {
             // If there is no cast device connected, launch video player.
-            if (mApiClient==null || !mApiClient.isConnected()) {
+            if(mApiClient==null || !mApiClient.isConnected()) {
                 Intent intent = new Intent(v.getContext(), PlayerActivity.class);
                 intent.putExtra(MovieList.ARG_ITEM_ID, mMovie.getId());
                 intent.putExtra(v.getContext().getString(R.string.should_start), true);
@@ -160,7 +169,26 @@ public class MovieDetailFragment extends Fragment implements Handler.Callback {
                 v.getContext().startActivity(intent);
             } else {
                 // Play video on via cast device
-                Toast.makeText(getActivity(), "Play via cast", Toast.LENGTH_SHORT).show();
+                MediaMetadata metadata = new MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE);
+                metadata.putString(MediaMetadata.KEY_TITLE, mMovie.getTitle());
+                metadata.putString(MediaMetadata.KEY_STUDIO, mMovie.getStudio());
+
+                MediaInfo info = new MediaInfo.Builder(mMovie.getVideoUrl())
+                        .setMetadata(metadata)
+                        .setContentType("video/mp4")
+                        .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED).build();
+
+                mRemotePlayer.load(mApiClient, info, true)
+                        .setResultCallback(new ResultCallback<RemoteMediaPlayer.MediaChannelResult>() {
+                    @Override
+                    public void onResult(RemoteMediaPlayer.MediaChannelResult mediaChannelResult) {
+                        if(!mediaChannelResult.getStatus().isSuccess()){
+                            Toast.makeText(getActivity().getApplicationContext(),
+                                    "Failed to play", Toast.LENGTH_SHORT).show();
+                        }
+
+                    }
+                });
             }
         }
     };
@@ -270,6 +298,27 @@ public class MovieDetailFragment extends Fragment implements Handler.Callback {
             mApiClient = null;
         }
         mSelectedDevice = null;
+    }
+
+    @Override
+    public void onMetadataUpdated() {
+
+    }
+
+    @Override
+    public void onStatusUpdated() {
+        MediaStatus status = mRemotePlayer.getMediaStatus();
+        switch(status.getPlayerState()){
+            case MediaStatus.PLAYER_STATE_PLAYING:
+
+                break;
+            case MediaStatus.PLAYER_STATE_PAUSED:
+
+                break;
+            case MediaStatus.PLAYER_STATE_BUFFERING:
+
+                break;
+        }
     }
 
     private class MediaRouteCallback extends MediaRouter.Callback {

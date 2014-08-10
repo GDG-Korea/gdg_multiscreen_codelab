@@ -6,11 +6,13 @@
         android:name=".MyApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:label="@string/app_name" >
+
+        <!--activities for mobile-->
         <activity
             android:name=".MovieListActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -20,15 +22,31 @@
         <activity
             android:name=".PlayerActivity"
             android:screenOrientation="landscape"
-            android:theme="@style/AppTheme.Detail" />
+            android:theme="@style/AppTheme.FullScreen" />
         <activity
             android:name=".MovieDetailActivity"
             android:label="@string/title_movie_detail"
-            android:parentActivityName=".MovieListActivity" >
-            <meta-data
+            android:parentActivityName=".MovieListActivity"
+            android:theme="@style/AppTheme" >
+        <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MovieListActivity" />
         </activity>
+
+        <!--activities for tv-->
+        <activity
+            android:name=".tv.TvMovieBrowseActivity"
+            android:label="@string/title_activity_my"
+            android:theme="@style/Theme.Leanback">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".tv.TvMovieDetailsActivity"
+            android:theme="@style/Theme.Leanback"/>
+
+        <!--receiver-->
         <receiver android:name=".Notification.NotificationIntentReceiver"
             android:exported="false">
             <intent-filter>
@@ -38,11 +56,13 @@
             </intent-filter>
         </receiver>
 
+        <!--metadata-->
         <meta-data android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
     </application>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
 </manifest>

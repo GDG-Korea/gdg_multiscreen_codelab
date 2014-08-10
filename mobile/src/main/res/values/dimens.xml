@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <dimen name="actionbar_x4">224dp</dimen>
     <dimen name="baseline_grid">8dp</dimen>
-
     <dimen name="defaultPadding">16dp</dimen>
     <dimen name="halfPadding">8dp</dimen>
-
     <dimen name="touchTarget">48dp</dimen>
-
     <dimen name="headlineFont">24sp</dimen>
     <dimen name="titleFont">20sp</dimen>
     <dimen name="subheadFont">16sp</dimen>
     <dimen name="bodyFont">14sp</dimen>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+
 </resources>

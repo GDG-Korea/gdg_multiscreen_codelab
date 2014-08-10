@@ -1,13 +1,11 @@
 package com.gdgkoreaandroid.multiscreencodelab.dummy;
 
-import java.io.Serializable;
+import android.util.Log;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import android.util.Log;
-
-public class Movie implements Serializable {
-    static final long serialVersionUID = 727566175075960653L;
+public class Movie {
     private static long count = 0;
     private long id;
     private String title;

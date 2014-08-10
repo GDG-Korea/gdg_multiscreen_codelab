@@ -1,22 +1,28 @@
 package com.gdgkoreaandroid.multiscreencodelab;
 
-import android.app.Fragment;
-import android.app.Notification;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+
+import android.app.Fragment;
+import android.app.Notification;
+
+import android.content.Intent;
+
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.MediaRouteActionProvider;
 import android.support.v7.media.MediaRouteSelector;
 import android.support.v7.media.MediaRouter;
+
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,6 +36,7 @@ import com.gdgkoreaandroid.multiscreencodelab.Notification.PriorityPreset;
 import com.gdgkoreaandroid.multiscreencodelab.Notification.PriorityPresets;
 import com.gdgkoreaandroid.multiscreencodelab.dummy.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.dummy.MovieList;
+
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
@@ -122,15 +129,27 @@ public class MovieDetailFragment extends Fragment
         // Show the dummy content as text in a TextView.
         if (mMovie != null) {
 
-            ImageView thumbnail = (ImageView) rootView.findViewById(R.id.movie_detail_thumb);
+            final ImageView thumbnail = (ImageView) rootView.findViewById(R.id.movie_detail_thumb);
+
             TextView title = (TextView) rootView.findViewById(R.id.movie_detail_title);
             TextView meta = (TextView) rootView.findViewById(R.id.movie_detail_meta);
             TextView description = (TextView) rootView.findViewById(R.id.movie_detail_descritpion);
             ImageView play = (ImageView) rootView.findViewById(R.id.movie_detail_play);
+
             View thumbContainer = rootView.findViewById(R.id.movie_detail_thumb_container);
 
-            MyApplication.getImageDownloaderInstance().downloadImage(
-                    mMovie.getBackgroundImageUrl(), thumbnail);
+            thumbnail.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+
+                @Override
+                public void onGlobalLayout() {
+                    thumbnail.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+
+                    if(thumbnail.isEnabled()){
+                        MyApplication.getImageDownloaderInstance().downloadImage(
+                                mMovie.getBackgroundImageUrl(), thumbnail);
+                    }
+                }
+            });
 
             title.setText(mMovie.getTitle());
             meta.setText(mMovie.getStudio());

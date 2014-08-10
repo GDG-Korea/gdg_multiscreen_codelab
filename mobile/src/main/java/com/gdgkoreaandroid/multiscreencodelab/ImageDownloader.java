@@ -7,6 +7,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.util.LruCache;
+import android.view.View;
 import android.widget.ImageView;
 
 import java.io.IOException;
@@ -16,7 +17,14 @@ import java.net.URL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-class ImageDownloader {
+public class ImageDownloader {
+
+    public interface ImageSetter {
+        Bitmap setImageBitmap(final Bitmap bitmap);
+        void setErrorDrawable();
+        void setEmptyDrawable();
+        View getTargetView();
+    }
 
     private Handler mMainUIHandler;
     private ExecutorService mWorkerThreadPool;
@@ -28,113 +36,159 @@ class ImageDownloader {
         mMemoryCache = new LruCache<String, Bitmap>(30);
     }
 
-    public void downloadImage(final String urlStr, final ImageView view){
+    public DownloadJob downloadImage(final String urlStr, final ImageSetter imageSetter ){
 
         final URL url;
         try {
             url = new URL(urlStr);
         } catch (MalformedURLException e) {
-            setErrorBitmap(view);
-            return;
+            imageSetter.setEmptyDrawable();
+            return null;
         }
 
-        DownloadJob oldJob = (DownloadJob) view.getTag(R.id.download_job);
+        DownloadJob oldJob = null;
+
+        final View targetView = imageSetter.getTargetView();
+        if( targetView != null ) {
+            oldJob = (DownloadJob) targetView.getTag(R.id.download_job);
+        }
 
         //check current job.
         if( oldJob != null ){
-            if(oldJob.mDownloadURL.equals(urlStr))
-                return;
-
+            if(oldJob.mDownloadURL.equals(urlStr)) {
+                return oldJob;
+            }
             oldJob.cancel();
         }
 
         //check memory cache.
         Bitmap cachedBitmap = mMemoryCache.get(urlStr);
         if( cachedBitmap != null ){
-            setBitmap(view, cachedBitmap);
-            return;
+            imageSetter.setImageBitmap(cachedBitmap);
+            return null;
         }
 
-        setEmptyBitmap(view);
+        imageSetter.setEmptyDrawable();
+        final DownloadJob newJob = new DownloadJob(urlStr, imageSetter);
 
-        final DownloadJob newJob = new DownloadJob(urlStr);
-        view.setTag(R.id.download_job, newJob);
+        if(targetView != null) {
+            targetView.setTag(R.id.download_job, newJob);
+        }
 
         mWorkerThreadPool.execute(new Runnable(){
+
             @Override
             public void run() {
 
                 try {
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    Bitmap bitmap = BitmapFactory.decodeStream(conn.getInputStream());
+                    final Bitmap bitmap = BitmapFactory.decodeStream(conn.getInputStream());
                     conn.disconnect();
 
                     if( bitmap != null && ! newJob.isCanceled() ){
 
-                        final int w = view.getWidth();
-                        final int h = view.getHeight();
-
-                        Bitmap scaledBitmap = resizeBitmap(bitmap, w, h);
-                        bitmap.recycle();
-
-                        setBitmap(view, scaledBitmap);
-
-                        mMemoryCache.put(urlStr, scaledBitmap);
+                        mMainUIHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Bitmap resultBitmap = imageSetter.setImageBitmap(bitmap);
+                                mMemoryCache.put(urlStr, resultBitmap);
+                            }
+                        });
                     }else{
-                        setErrorBitmap(view);
+
+                        mMainUIHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                imageSetter.setErrorDrawable();
+                            }
+                        });
                     }
                 } catch (IOException e) {
-                    setErrorBitmap(view);
+
+                    mMainUIHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            imageSetter.setErrorDrawable();
+                        }
+                    });
                 }
             }
         });
+
+        return newJob;
     }
 
+    public DownloadJob downloadImage(final String urlStr, final ImageView view){
 
-    private void setEmptyBitmap(ImageView view) {
-        view.setImageDrawable(new ColorDrawable(Color.LTGRAY));
+        SimpleImageSetter imageSetter = new SimpleImageSetter(view);
+        return downloadImage(urlStr, imageSetter);
+    }
+
+    final private class SimpleImageSetter implements ImageSetter {
+
+        private final ImageView mView;
+
+        private SimpleImageSetter(ImageView view) {
+            mView = view;
+        }
+
+        @Override
+        public void setEmptyDrawable() {
+            mView.setImageDrawable(new ColorDrawable(Color.LTGRAY));
+        }
+
+        @Override
+        public Bitmap setImageBitmap(final Bitmap bitmap) {
+            final int width = mView.getMeasuredWidth();
+            final int height = mView.getMeasuredHeight();
+
+            Bitmap resultBitmap = bitmap;
+            if(bitmap.getWidth() < width || bitmap.getHeight() < height){
+                //the size of original bitmap is smaller than the target view.
+                resultBitmap = bitmap;
+            } else if(bitmap.getWidth() == width && bitmap.getHeight() == height) {
+                //the size of original bitmap is identical to the target view.
+                resultBitmap = bitmap;
+            } else {
+                Bitmap scaledBitmap = resizeBitmap(bitmap, width, height);
+                if(scaledBitmap != null) {
+                    bitmap.recycle();
+                    resultBitmap = scaledBitmap;
+                }
+            }
+
+            mView.setImageBitmap(resultBitmap);
+            return resultBitmap;
+        }
+
+        @Override
+        public void setErrorDrawable() {
+            mView.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+        }
+
+        @Override
+        public View getTargetView() {
+            return mView;
+        }
     }
 
     private Bitmap resizeBitmap(Bitmap bitmap, int width, int height) {
-       Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
+        Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
         return scaledBitmap;
     }
 
-    private void setBitmap(final ImageView view, final Bitmap bitmap) {
-        mMainUIHandler.post(new Runnable() {
-
-            @Override
-            public void run() {
-                view.setImageBitmap(bitmap);
-            }
-
-        });
-    }
-
-    private void setErrorBitmap(final ImageView view) {
-        mMainUIHandler.post(new Runnable() {
-
-            @Override
-            public void run() {
-                view.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
-            }
-
-        });
-    }
-
-    private static class DownloadJob {
+    public static class DownloadJob {
 
         private String mDownloadURL;
         private boolean mCanceled;
 
-        public DownloadJob(String urlStr){
+        public DownloadJob(String urlStr, ImageSetter task){
             mDownloadURL = urlStr;
         }
 
         public void cancel(){
             mCanceled = true;
         }
-
         public boolean isCanceled(){
             return mCanceled;
         }

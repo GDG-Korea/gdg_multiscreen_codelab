@@ -26,4 +26,8 @@ Change Logs
 ScreenShots
 ----------------------
 
-![Media Browser](/../screenshot/screenshots/device-2014-07-30-131458.png?raw=true "Media Browser")
+![Media Browser](/screenshots/device-2014-08-10-233328.png?raw=true "Media Browser")
+
+![Media Browser](/screenshots/device-2014-08-10-233344.png?raw=true "Media Browser")
+
+![Android TV Media Browser](/screenshots/device-2014-08-10-233146.png?raw=true "Android TV Media Browser")

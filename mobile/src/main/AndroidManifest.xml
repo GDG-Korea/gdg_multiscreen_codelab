@@ -29,6 +29,14 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MovieListActivity" />
         </activity>
+        <receiver android:name=".Notification.NotificationIntentReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.android.support.wearable.notifications.ACTION_EXAMPLE" />
+                <action android:name="com.example.android.support.wearable.notifications.ACTION_ENABLE_MESSAGES" />
+                <action android:name="com.example.android.support.wearable.notifications.ACTION_DISABLE_MESSAGES" />
+            </intent-filter>
+        </receiver>
     </application>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>

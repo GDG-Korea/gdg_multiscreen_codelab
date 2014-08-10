@@ -35,4 +35,13 @@
     <string name="video_error_server_unaccessible">Media server was not reachable</string>
     <string name="video_error_unknown_error">Failed to load video</string>
     <string name="oops">Oops</string>
+    <string name="default_priority">Default priority</string>
+    <string name="single_action">Single action</string>
+    <string name="example_action">Example action</string>
+    <string name="example_action_clicked">Example action clicked</string>
+    <string name="example_notification_deleted">Example notification deleted</string>
+    <string name="content_intent_clicked">Content intent clicked</string>
+    <string name="basic_example">Basic example</string>
+    <string name="example_content_title">Basic example title</string>
+    <string name="example_content_text">Basic example text</string>
 </resources>

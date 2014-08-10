@@ -42,6 +42,7 @@ public class PlayerActivity extends Activity {
     private static final double MEDIA_BAR_HEIGHT = 0.1;
     private static final double MEDIA_BAR_WIDTH = 0.9;
 
+
     private VideoView mVideoView;
     private TextView mStartText;
     private TextView mEndText;

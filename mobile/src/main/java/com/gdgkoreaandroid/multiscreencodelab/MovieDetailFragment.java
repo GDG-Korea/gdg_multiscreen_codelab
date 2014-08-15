@@ -31,12 +31,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.gdgkoreaandroid.multiscreencodelab.notification.ActionsPreset;
-import com.gdgkoreaandroid.multiscreencodelab.notification.ActionsPresets;
 import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationIntentReceiver;
 import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationPreset;
-import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationPresets;
 import com.gdgkoreaandroid.multiscreencodelab.notification.PriorityPreset;
-import com.gdgkoreaandroid.multiscreencodelab.notification.PriorityPresets;
 import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
 

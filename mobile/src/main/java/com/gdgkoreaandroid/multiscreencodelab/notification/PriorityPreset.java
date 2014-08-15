@@ -16,12 +16,19 @@
 
 package com.gdgkoreaandroid.multiscreencodelab.notification;
 
+import android.app.Notification;
 import android.support.v4.app.NotificationCompat;
+
+import com.gdgkoreaandroid.multiscreencodelab.R;
 
 /**
  * Base class for notification priority presets.
  */
 public abstract class PriorityPreset extends NamedPreset {
+
+    public static final PriorityPreset DEFAULT = new SimplePriorityPreset(R.string.default_priority, Notification.PRIORITY_MAX);
+
+
     public PriorityPreset(int nameResId) {
         super(nameResId);
     }
@@ -29,4 +36,19 @@ public abstract class PriorityPreset extends NamedPreset {
     /** Apply the priority to a notification builder */
     public abstract void apply(NotificationCompat.Builder builder,
             NotificationCompat.WearableExtender wearableOptions);
+
+    private static class SimplePriorityPreset extends PriorityPreset {
+        private final int mPriority;
+
+        public SimplePriorityPreset(int nameResId, int priority) {
+            super(nameResId);
+            mPriority = priority;
+        }
+
+        @Override
+        public void apply(NotificationCompat.Builder builder,
+                          NotificationCompat.WearableExtender wearableOptions) {
+            builder.setPriority(mPriority);
+        }
+    }
 }

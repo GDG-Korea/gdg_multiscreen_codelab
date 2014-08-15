@@ -25,25 +25,25 @@ import com.gdgkoreaandroid.multiscreencodelab.R;
  * Collection of notification actions presets.
  */
 public class ActionsPresets {
-    public static final ActionsPreset ACTION_PRESET = new SingleActionPreset();
-
-    private static class SingleActionPreset extends ActionsPreset {
-        public SingleActionPreset() {
-            super(R.string.single_action);
-        }
-
-        @Override
-        public void apply(Context context, NotificationCompat.Builder builder,
-                NotificationCompat.WearableExtender wearableOptions) {
-            builder.addAction(R.drawable.ic_full_action,
-                    context.getString(R.string.example_action),
-                    NotificationUtil.getExamplePendingIntent(context,
-                            R.string.example_action_clicked))
-                    .addAction(R.drawable.ic_full_action,
-                    context.getString(R.string.example_action),
-                    NotificationUtil.getExamplePendingIntent(context,
-                            R.string.example_action_clicked))
-                    .build();
-        }
-    }
+//    public static final ActionsPreset ACTION_PRESET = new SingleActionPreset();
+//
+//    private static class SingleActionPreset extends ActionsPreset {
+//        public SingleActionPreset() {
+//            super(R.string.single_action);
+//        }
+//
+//        @Override
+//        public void apply(Context context, NotificationCompat.Builder builder,
+//                NotificationCompat.WearableExtender wearableOptions) {
+//            builder.addAction(R.drawable.ic_full_action,
+//                    context.getString(R.string.example_action),
+//                    NotificationUtil.getExamplePendingIntent(context,
+//                            R.string.example_action_clicked))
+//                    .addAction(R.drawable.ic_full_action,
+//                    context.getString(R.string.example_action),
+//                    NotificationUtil.getExamplePendingIntent(context,
+//                            R.string.example_action_clicked))
+//                    .build();
+//        }
+//    }
 }

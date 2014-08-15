@@ -255,14 +255,14 @@ public class MovieDetailFragment extends Fragment
     private void postNotifications() {
         getActivity().sendBroadcast(new Intent(NotificationIntentReceiver.ACTION_ENABLE_MESSAGES).setClass(getActivity(), NotificationIntentReceiver.class));
 
-        NotificationPreset preset = NotificationPresets.PRESETS[0];
+        NotificationPreset preset = NotificationPreset.PRESETS;
 
         //Todo preset 제작하기.
         CharSequence titlePreset = "GDG MultipleCodeLab";
         CharSequence textPreset = "This is hellCodeLab";
-        PriorityPreset priorityPreset = PriorityPresets.DEFAULT;
+        PriorityPreset priorityPreset = PriorityPreset.DEFAULT;
 
-        ActionsPreset actionsPreset = ActionsPresets.ACTION_PRESET; //Todo : 어떤 Action을 제공할건지 여기서 결정해야함.
+        ActionsPreset actionsPreset = ActionsPreset.ACTION_PRESET; //Todo : 어떤 Action을 제공할건지 여기서 결정해야함.
 
         NotificationPreset.BuildOptions options = new NotificationPreset.BuildOptions(
                 titlePreset,

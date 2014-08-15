@@ -30,47 +30,40 @@ public class MovieDetailsFragment extends DetailsFragment {
     private static final int ACTION_WATCH_TRAILER = 1;
 
     private Movie mSelectedMovie;
-    private DisplayMetrics mMetrics;
-    private BackgroundManager mBackgroundManager;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.i(TAG, "onCreate DetailsFragment");
         super.onCreate(savedInstanceState);
 
-        mBackgroundManager = BackgroundManager.getInstance(getActivity());
-        mBackgroundManager.attach(getActivity().getWindow());
-
-        mMetrics = new DisplayMetrics();
-        getActivity().getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
-
         long movieId = getActivity().getIntent().getLongExtra(MovieList.ARG_ITEM_ID, 0);
         mSelectedMovie = MovieList.getMovie(movieId);
 
         setupAdapters();
-        updateBackground(mSelectedMovie.getBackgroundImageURI());
+
+        //TODO Bonus Point!
+        //updateBackground(mSelectedMovie.getBackgroundImageURI());
     }
 
     private void setupAdapters() {
 
         //This method should be blank at the first, and be implemented by codelab attendees.
-        DetailsOverviewRowPresenter dorPresenter =
-                new DetailsOverviewRowPresenter(new AbstractDetailsDescriptionPresenter(){
 
-                    @Override
-                    protected void onBindDescription(ViewHolder viewHolder, Object item) {
-                        Movie movie = (Movie) item;
-                        if (movie != null) {
-                            viewHolder.getTitle().setText(movie.getTitle());
-                            viewHolder.getSubtitle().setText(movie.getStudio());
-                            viewHolder.getBody().setText(movie.getDescription());
-                        }
+        AbstractDetailsDescriptionPresenter detailsDescriptionPresenter
+                = new AbstractDetailsDescriptionPresenter() {
 
-                    }
-                });
+            protected void onBindDescription(ViewHolder viewHolder, Object item) {
+                Movie movie = (Movie) item;
+                viewHolder.getTitle().setText(movie.getTitle());
+                viewHolder.getSubtitle().setText(movie.getStudio());
+                viewHolder.getBody().setText(movie.getDescription());
+            }
+        };
 
-        dorPresenter.setBackgroundColor(getResources().getColor(R.color.primary_dark_color));
-        dorPresenter.setOnActionClickedListener(new OnActionClickedListener() {
+        DetailsOverviewRowPresenter detailsOverviewRowPresenter
+                = new DetailsOverviewRowPresenter(detailsDescriptionPresenter);
+
+        detailsOverviewRowPresenter.setOnActionClickedListener(new OnActionClickedListener() {
             @Override
             public void onActionClicked(Action action) {
                 if (action.getId() == ACTION_WATCH_TRAILER) {
@@ -85,20 +78,24 @@ public class MovieDetailsFragment extends DetailsFragment {
             }
         });
 
-        ArrayObjectAdapter adapter = new ArrayObjectAdapter(dorPresenter);
-
-        final DetailsOverviewRow row = new DetailsOverviewRow(mSelectedMovie);
+        DetailsOverviewRow row = new DetailsOverviewRow(mSelectedMovie);
         row.addAction(new Action(ACTION_WATCH_TRAILER, getResources().getString(
                 R.string.watch_trailer_1), getResources().getString(R.string.watch_trailer_2)));
 
+        ArrayObjectAdapter adapter = new ArrayObjectAdapter(detailsOverviewRowPresenter);
         adapter.add(row);
-        setAdapter(adapter);
 
-        updateBackground(mSelectedMovie.getBackgroundImageURI());
+        setAdapter(adapter);
     }
 
-    protected void updateBackground(URI uri) {
+    private void updateBackground(URI uri) {
         //This method should be blank at the first, and be implemented by codelab attendees.
+
+        final BackgroundManager bgManager = BackgroundManager.getInstance(getActivity());
+        bgManager.attach(getActivity().getWindow());
+
+        final DisplayMetrics metrics = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
         MyApplication.getImageDownloaderInstance().downloadImage(
                 uri.toString(), new DummyImageSetter() {
@@ -108,16 +105,16 @@ public class MovieDetailsFragment extends DetailsFragment {
 
                         Bitmap resultBitmap = bitmap;
 
-                        int width = mMetrics.widthPixels;
-                        int height = mMetrics.heightPixels;
+                        int width = metrics.widthPixels;
+                        int height = metrics.heightPixels;
 
                         if(bitmap.getWidth() != width || bitmap.getHeight() != height){
                             Bitmap scaledBitmap = Bitmap.createScaledBitmap(
-                                    bitmap, mMetrics.widthPixels, mMetrics.heightPixels, true);
+                                    bitmap, metrics.widthPixels, metrics.heightPixels, true);
                             bitmap.recycle();
                             resultBitmap = scaledBitmap;
                         }
-                        mBackgroundManager.setBitmap(resultBitmap);
+                        bgManager.setBitmap(resultBitmap);
                         return resultBitmap;
                     }
                 });

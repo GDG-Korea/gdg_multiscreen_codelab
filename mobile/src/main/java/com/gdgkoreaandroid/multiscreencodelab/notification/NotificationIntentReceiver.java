@@ -12,34 +12,27 @@ import android.widget.Toast;
  */
 public class NotificationIntentReceiver extends BroadcastReceiver {
 
-    public static final String ACTION_EXAMPLE =
-            "com.gdgkoreaandroid.multiscreencodelab.ACTION_EXAMPLE";
-    public static final String ACTION_ENABLE_MESSAGES =
-            "com.gdgkoreaandroid.multiscreencodelab.ACTION_ENABLE_MESSAGES";
-    public static final String ACTION_DISABLE_MESSAGES =
-            "com.gdgkoreaandroid.multiscreencodelab.ACTION_DISABLE_MESSAGES";
-
-    private boolean mEnableMessages = true;
+    public static final String SHOW_TOAST = "com.gdgkoreaandroid.multiscreencodelab.SHOW_TOAST";
+    public static final String DELETE_NOTIFI = "com.gdgkoreaandroid.multiscreencodelab.DELETE_NOTIFI";
+    public static final String PLAY_NEXT = "com.gdgkoreaandroid.multiscreencodelab.PLAY_NEXT";
+    public static final String PLAY_PREVIOUS = "com.gdgkoreaandroid.multiscreencodelab.PLAY_PREVIOUS";
+    public static final String PLAY = "com.gdgkoreaandroid.multiscreencodelab.PLAY";
+    public static final String STOP = "com.gdgkoreaandroid.multiscreencodelab.STOP";
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (intent.getAction().equals(ACTION_EXAMPLE)) {
-            if (mEnableMessages) {
-                String message = intent.getStringExtra(NotificationUtil.EXTRA_MESSAGE);
-                Bundle remoteInputResults = RemoteInput.getResultsFromIntent(intent);
-                CharSequence replyMessage = null;
-                if (remoteInputResults != null) {
-                    replyMessage = remoteInputResults.getCharSequence(NotificationUtil.EXTRA_REPLY);
-                }
-                if (replyMessage != null) {
-                    message = message + ": \"" + replyMessage + "\"";
-                }
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
-            }
-        }else if (intent.getAction().equals(ACTION_ENABLE_MESSAGES)) {
-            mEnableMessages = true;
-        } else if (intent.getAction().equals(ACTION_DISABLE_MESSAGES)) {
-            mEnableMessages = false;
+        if (intent.getAction().equals(SHOW_TOAST)){
+            Toast.makeText(context, "success!!", Toast.LENGTH_SHORT).show();
+        }else if (intent.getAction().equals(DELETE_NOTIFI)){
+            Toast.makeText(context, "Notification is Deleted", Toast.LENGTH_SHORT).show();
+        }else if (intent.getAction().equals(PLAY_NEXT)){
+            Toast.makeText(context, "Notification is Deleted", Toast.LENGTH_SHORT).show();
+        }else if (intent.getAction().equals(PLAY_PREVIOUS)){
+            Toast.makeText(context, "Notification is Deleted", Toast.LENGTH_SHORT).show();
+        }else if (intent.getAction().equals(PLAY)){
+            Toast.makeText(context, "Notification is Deleted", Toast.LENGTH_SHORT).show();
+        }else if (intent.getAction().equals(STOP)){
+            Toast.makeText(context, "Notification is Deleted", Toast.LENGTH_SHORT).show();
         }
     }
 }

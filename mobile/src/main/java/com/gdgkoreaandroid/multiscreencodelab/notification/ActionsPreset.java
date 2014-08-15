@@ -26,26 +26,16 @@ public class ActionsPreset extends NamedPreset {
      */
     public void apply(Context context, NotificationCompat.Builder builder,
                       NotificationCompat.WearableExtender wearableOptions) {
-        NotificationCompat.Action action1 = new NotificationCompat.Action.Builder(R.drawable.ic_full_action, context.getString(R.string.example_action), NotificationUtil.getExamplePendingIntent(context,
-                R.string.example_action_clicked)).build();
-        NotificationCompat.Action action2 = new NotificationCompat.Action.Builder(R.drawable.ic_full_action, context.getString(R.string.example_action), NotificationUtil.getExamplePendingIntent(context,
-                R.string.example_action_clicked)).build();
-        wearableOptions.addAction(action1).addAction(action2);
 
-        builder.setSmallIcon(R.drawable.ic_full_action)
-               .setContentTitle("ContentTitle")
-               .setContentText("abcdefg")
-               .extend(wearableOptions)
-               .build();
+        NotificationCompat.Action playnstop = new NotificationCompat.Action.Builder(R.drawable.ic_full_action, context.getString(R.string.example_action), NotificationUtil.getToastPendingIntent(context,
+                R.string.example_action_clicked)).build();
+        NotificationCompat.Action previous = new NotificationCompat.Action.Builder(R.drawable.ic_full_action, context.getString(R.string.example_action), NotificationUtil.getToastPendingIntent(context,
+                R.string.example_action_clicked)).build();
+        NotificationCompat.Action next = new NotificationCompat.Action.Builder(R.drawable.ic_full_action, context.getString(R.string.example_action), NotificationUtil.getToastPendingIntent(context,
+                R.string.example_action_clicked)).build();
+        wearableOptions.addAction(playnstop).addAction(previous).addAction(next);
 
-//        builder.addAction(R.drawable.ic_full_action,
-//                context.getString(R.string.example_action),
-//                NotificationUtil.getExamplePendingIntent(context,
-//                        R.string.example_action_clicked))
-//                .addAction(R.drawable.ic_full_action,
-//                        context.getString(R.string.example_action),
-//                        NotificationUtil.getExamplePendingIntent(context,
-//                                R.string.example_action_clicked))
-//                .build();
+        builder.extend(wearableOptions)
+                .build();
     }
 }

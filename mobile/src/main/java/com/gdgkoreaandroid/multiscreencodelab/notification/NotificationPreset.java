@@ -15,8 +15,6 @@ public class NotificationPreset extends NamedPreset {
     public final int titleResId;
     public final int textResId;
 
-    private static final String EXAMPLE_GROUP_KEY = "example";
-
     public static final NotificationPreset PRESETS = new NotificationPreset();
 
     public NotificationPreset() {
@@ -82,14 +80,14 @@ public class NotificationPreset extends NamedPreset {
         builder.setContentTitle(options.titlePreset)
                 .setContentText(options.textPreset)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setDeleteIntent(NotificationUtil.getExamplePendingIntent(
+                .setDeleteIntent(NotificationUtil.getNotificationDeletePendingIntent(
                         context, R.string.example_notification_deleted));
         options.actionsPreset.apply(context, builder, wearableOptions);
         options.priorityPreset.apply(builder, wearableOptions);
 
         builder.setLargeIcon(BitmapFactory.decodeResource(
                 context.getResources(), R.drawable.example_large_icon));
-        builder.setContentIntent(NotificationUtil.getExamplePendingIntent(context,
+        builder.setContentIntent(NotificationUtil.getToastPendingIntent(context,
                 R.string.content_intent_clicked));
 
         return builder;

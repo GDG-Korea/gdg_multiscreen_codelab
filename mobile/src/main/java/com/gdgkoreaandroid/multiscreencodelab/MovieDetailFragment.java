@@ -1,22 +1,18 @@
 package com.gdgkoreaandroid.multiscreencodelab;
 
+import android.app.Fragment;
+import android.app.Notification;
+import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-
-import android.app.Fragment;
-import android.app.Notification;
-
-import android.content.Intent;
-
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.MediaRouteActionProvider;
 import android.support.v7.media.MediaRouteSelector;
 import android.support.v7.media.MediaRouter;
-
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -24,19 +20,16 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.gdgkoreaandroid.multiscreencodelab.notification.ActionsPreset;
-import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationIntentReceiver;
-import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationPreset;
-import com.gdgkoreaandroid.multiscreencodelab.notification.PriorityPreset;
 import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
-
+import com.gdgkoreaandroid.multiscreencodelab.notification.ActionsPreset;
+import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationPreset;
+import com.gdgkoreaandroid.multiscreencodelab.notification.PriorityPreset;
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
@@ -60,13 +53,7 @@ import java.io.IOException;
  */
 public class MovieDetailFragment extends Fragment
         implements RemoteMediaPlayer.OnStatusUpdatedListener,
-                    RemoteMediaPlayer.OnMetadataUpdatedListener,
-                    Handler.Callback {
-
-    private static final int MSG_POST_NOTIFICATIONS = 0;
-    private static final long POST_NOTIFICATIONS_DELAY_MS = 200;
-
-    private Handler mHandler;
+        RemoteMediaPlayer.OnMetadataUpdatedListener {
 
     private Movie mMovie;
 
@@ -110,8 +97,8 @@ public class MovieDetailFragment extends Fragment
     @Override
     public void onResume() {
         super.onResume();
-        updateNotifications(false /* cancelExisting */);
-        if(mApiClient!=null && mApiClient.isConnected()) {
+        postNotifications();
+        if (mApiClient != null && mApiClient.isConnected()) {
             attachMediaPlayer();
             mRemotePlayer.requestStatus(mApiClient);
         }
@@ -121,8 +108,6 @@ public class MovieDetailFragment extends Fragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_movie_detail, container, false);
-
-        mHandler = new Handler(this);
 
         if (mMovie != null) {
 
@@ -143,7 +128,7 @@ public class MovieDetailFragment extends Fragment
                 public void onGlobalLayout() {
                     thumbnail.getViewTreeObserver().removeOnGlobalLayoutListener(this);
 
-                    if(thumbnail.isEnabled()){
+                    if (thumbnail.isEnabled()) {
                         MyApplication.getImageDownloaderInstance().downloadImage(
                                 mMovie.getBackgroundImageUrl(), thumbnail);
                     }
@@ -178,12 +163,12 @@ public class MovieDetailFragment extends Fragment
         @Override
         public void onClick(View v) {
             // If there is no cast device connected, launch video player.
-            if(mApiClient==null || !mApiClient.isConnected()) {
+            if (mApiClient == null || !mApiClient.isConnected()) {
                 Intent intent = new Intent(v.getContext(), PlayerActivity.class);
                 intent.putExtra(MovieList.ARG_ITEM_ID, mMovie.getId());
                 intent.putExtra(v.getContext().getString(R.string.should_start), true);
 
-                updateNotifications(false);
+                postNotifications();
 
                 v.getContext().startActivity(intent);
             } else {
@@ -203,15 +188,15 @@ public class MovieDetailFragment extends Fragment
                                 .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED).build();
 
                         mRemotePlayer.load(mApiClient, info, true)
-                            .setResultCallback(new ResultCallback<RemoteMediaPlayer.MediaChannelResult>() {
-                                @Override
-                                public void onResult(RemoteMediaPlayer.MediaChannelResult mediaChannelResult) {
-                                    if (!mediaChannelResult.getStatus().isSuccess()) {
-                                        Toast.makeText(getActivity().getApplicationContext(),
-                                                "Failed to play", Toast.LENGTH_SHORT).show();
+                                .setResultCallback(new ResultCallback<RemoteMediaPlayer.MediaChannelResult>() {
+                                    @Override
+                                    public void onResult(RemoteMediaPlayer.MediaChannelResult mediaChannelResult) {
+                                        if (!mediaChannelResult.getStatus().isSuccess()) {
+                                            Toast.makeText(getActivity().getApplicationContext(),
+                                                    "Failed to play", Toast.LENGTH_SHORT).show();
+                                        }
                                     }
-                                }
-                            });
+                                });
                         break;
 
                     case MediaStatus.PLAYER_STATE_PAUSED:
@@ -229,29 +214,8 @@ public class MovieDetailFragment extends Fragment
     /**
      * Begin to re-post the sample notification(s).
      */
-    private void updateNotifications(boolean cancelExisting) {
-        // Disable messages to skip notification deleted messages during cancel.
-        getActivity().sendBroadcast(new Intent(NotificationIntentReceiver.ACTION_DISABLE_MESSAGES)
-                .setClass(getActivity(), NotificationIntentReceiver.class));
-
-        if (cancelExisting) { // 일단 항상 false이게 해놓음
-            // Cancel all existing notifications to trigger fresh-posting behavior: For example,
-            // switching from HIGH to LOW priority does not cause a reordering in Notification Shade.
-            NotificationManagerCompat.from(getActivity()).cancelAll();
-            postedNotificationCount = 0;
-
-            // Post the updated notifications on a delay to avoid a cancel+post race condition
-            // with notification manager.
-            mHandler.removeMessages(MSG_POST_NOTIFICATIONS);
-            mHandler.sendEmptyMessageDelayed(MSG_POST_NOTIFICATIONS, POST_NOTIFICATIONS_DELAY_MS);
-        } else {
-            postNotifications();
-        }
-    }
 
     private void postNotifications() {
-        getActivity().sendBroadcast(new Intent(NotificationIntentReceiver.ACTION_ENABLE_MESSAGES).setClass(getActivity(), NotificationIntentReceiver.class));
-
         CharSequence titlePreset = "GDG MultipleCodeLab";
         CharSequence textPreset = "This is hellCodeLab";
         NotificationPreset preset = NotificationPreset.PRESETS;
@@ -267,7 +231,6 @@ public class MovieDetailFragment extends Fragment
                 true,
                 null);
 
-
         Notification[] notifications = preset.buildNotifications(getActivity(), options);
 
         // Post new notifications
@@ -280,17 +243,6 @@ public class MovieDetailFragment extends Fragment
         }
         postedNotificationCount = notifications.length;
     }
-
-    @Override
-    public boolean handleMessage(Message message) {
-        switch (message.what) {
-            case MSG_POST_NOTIFICATIONS:
-                postNotifications();
-                return true;
-        }
-        return false;
-    }
-
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -312,7 +264,7 @@ public class MovieDetailFragment extends Fragment
     }
 
     private void attachMediaPlayer() {
-        if (mRemotePlayer!=null) {
+        if (mRemotePlayer != null) {
             return;
         }
 
@@ -320,20 +272,20 @@ public class MovieDetailFragment extends Fragment
         mRemotePlayer.setOnStatusUpdatedListener(MovieDetailFragment.this);
         mRemotePlayer.setOnMetadataUpdatedListener(this);
 
-        try{
+        try {
             Cast.CastApi.setMessageReceivedCallbacks(
                     mApiClient, mRemotePlayer.getNamespace(), mRemotePlayer);
-        }catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private void detachMediaPlayer() {
-        if(mRemotePlayer!=null && mApiClient !=null) {
+        if (mRemotePlayer != null && mApiClient != null) {
             try {
                 Cast.CastApi.removeMessageReceivedCallbacks(
                         mApiClient, mRemotePlayer.getNamespace());
-            }catch (IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
@@ -371,7 +323,7 @@ public class MovieDetailFragment extends Fragment
         mPlayerStatus = status.getPlayerState();
 
         // Set controller visibility according to playback state.
-        switch(mPlayerStatus){
+        switch (mPlayerStatus) {
             case MediaStatus.PLAYER_STATE_PLAYING:
                 play.setVisibility(View.VISIBLE);
                 play.setImageResource(R.drawable.ic_pause_playcontrol_normal);
@@ -433,20 +385,20 @@ public class MovieDetailFragment extends Fragment
         @Override
         public void onConnected(Bundle bundle) {
             Cast.CastApi.launchApplication(mApiClient,
-                MyApplication.MEDIA_RECEIVER_APPLICATION_ID, false)
+                    MyApplication.MEDIA_RECEIVER_APPLICATION_ID, false)
 
-                .setResultCallback(new ResultCallback<Cast.ApplicationConnectionResult>() {
-                    @Override
-                    public void onResult(Cast.ApplicationConnectionResult applicationConnectionResult) {
-                        Status status = applicationConnectionResult.getStatus();
+                    .setResultCallback(new ResultCallback<Cast.ApplicationConnectionResult>() {
+                        @Override
+                        public void onResult(Cast.ApplicationConnectionResult applicationConnectionResult) {
+                            Status status = applicationConnectionResult.getStatus();
 
-                        if (status.isSuccess()) {
-                            mApplicationStarted = true;
-                        } else {
-                            tearDown();
+                            if (status.isSuccess()) {
+                                mApplicationStarted = true;
+                            } else {
+                                tearDown();
+                            }
                         }
-                    }
-                });
+                    });
 
         }
 

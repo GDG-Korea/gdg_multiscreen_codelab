@@ -78,6 +78,7 @@ public class NotificationPreset extends NamedPreset {
     private static NotificationCompat.Builder applyBasicOptions(Context context,
                                                                 NotificationCompat.Builder builder, NotificationCompat.WearableExtender wearableOptions,
                                                                 NotificationPreset.BuildOptions options) {
+
         builder.setContentTitle(options.titlePreset)
                 .setContentText(options.textPreset)
                 .setSmallIcon(R.mipmap.ic_launcher)

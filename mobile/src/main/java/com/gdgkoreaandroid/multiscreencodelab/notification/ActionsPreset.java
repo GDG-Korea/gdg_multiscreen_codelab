@@ -25,29 +25,27 @@ public class ActionsPreset extends NamedPreset {
      * Apply the priority to a notification builder
      */
     public void apply(Context context, NotificationCompat.Builder builder,
-                               NotificationCompat.WearableExtender wearableOptions){
+                      NotificationCompat.WearableExtender wearableOptions) {
         NotificationCompat.Action action1 = new NotificationCompat.Action.Builder(R.drawable.ic_full_action, context.getString(R.string.example_action), NotificationUtil.getExamplePendingIntent(context,
                 R.string.example_action_clicked)).build();
-
         NotificationCompat.Action action2 = new NotificationCompat.Action.Builder(R.drawable.ic_full_action, context.getString(R.string.example_action), NotificationUtil.getExamplePendingIntent(context,
                 R.string.example_action_clicked)).build();
+        wearableOptions.addAction(action1).addAction(action2);
 
-        builder
-                .setSmallIcon(R.drawable.ic_full_action)
-                .setContentTitle("ContentTitle")
-                .setContentText("abcdefg")
-                .extend(new NotificationCompat.WearableExtender().addAction(action1).addAction(action2))
-                .build();
+        builder.setSmallIcon(R.drawable.ic_full_action)
+               .setContentTitle("ContentTitle")
+               .setContentText("abcdefg")
+               .extend(wearableOptions)
+               .build();
 
-//            builder.addAction(R.drawable.ic_full_action,
-//                    context.getString(R.string.example_action),
-//                    NotificationUtil.getExamplePendingIntent(context,
-//                            R.string.example_action_clicked))
-//                    .addAction(R.drawable.ic_full_action,
-//                            context.getString(R.string.example_action),
-//                            NotificationUtil.getExamplePendingIntent(context,
-//                                    R.string.example_action_clicked))
-//                    .build();
-
+//        builder.addAction(R.drawable.ic_full_action,
+//                context.getString(R.string.example_action),
+//                NotificationUtil.getExamplePendingIntent(context,
+//                        R.string.example_action_clicked))
+//                .addAction(R.drawable.ic_full_action,
+//                        context.getString(R.string.example_action),
+//                        NotificationUtil.getExamplePendingIntent(context,
+//                                R.string.example_action_clicked))
+//                .build();
     }
 }

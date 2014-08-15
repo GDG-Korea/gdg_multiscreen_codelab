@@ -245,21 +245,18 @@ public class MovieDetailFragment extends Fragment
             mHandler.removeMessages(MSG_POST_NOTIFICATIONS);
             mHandler.sendEmptyMessageDelayed(MSG_POST_NOTIFICATIONS, POST_NOTIFICATIONS_DELAY_MS);
         } else {
-            postNotifications(); // 항상 동영상을 재생하면 이쪽으로 오게 되는걸로.
+            postNotifications();
         }
     }
 
     private void postNotifications() {
         getActivity().sendBroadcast(new Intent(NotificationIntentReceiver.ACTION_ENABLE_MESSAGES).setClass(getActivity(), NotificationIntentReceiver.class));
 
-        NotificationPreset preset = NotificationPreset.PRESETS;
-
-        //Todo preset 제작하기.
         CharSequence titlePreset = "GDG MultipleCodeLab";
         CharSequence textPreset = "This is hellCodeLab";
+        NotificationPreset preset = NotificationPreset.PRESETS;
         PriorityPreset priorityPreset = PriorityPreset.DEFAULT;
-
-        ActionsPreset actionsPreset = ActionsPreset.ACTION_PRESET; //Todo : 어떤 Action을 제공할건지 여기서 결정해야함.
+        ActionsPreset actionsPreset = ActionsPreset.ACTION_PRESET;
 
         NotificationPreset.BuildOptions options = new NotificationPreset.BuildOptions(
                 titlePreset,

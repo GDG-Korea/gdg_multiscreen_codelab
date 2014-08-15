@@ -24,31 +24,21 @@ import com.gdgkoreaandroid.multiscreencodelab.R;
 /**
  * Base class for notification priority presets.
  */
-public abstract class PriorityPreset extends NamedPreset {
+public class PriorityPreset extends NamedPreset {
+    private final int mPriority;
 
-    public static final PriorityPreset DEFAULT = new SimplePriorityPreset(R.string.default_priority, Notification.PRIORITY_MAX);
+    public static final PriorityPreset DEFAULT = new PriorityPreset(R.string.default_priority, Notification.PRIORITY_MAX) {
+    };
 
 
-    public PriorityPreset(int nameResId) {
+    public PriorityPreset(int nameResId, int priority) {
         super(nameResId);
+        mPriority = priority;
     }
 
     /** Apply the priority to a notification builder */
-    public abstract void apply(NotificationCompat.Builder builder,
-            NotificationCompat.WearableExtender wearableOptions);
-
-    private static class SimplePriorityPreset extends PriorityPreset {
-        private final int mPriority;
-
-        public SimplePriorityPreset(int nameResId, int priority) {
-            super(nameResId);
-            mPriority = priority;
-        }
-
-        @Override
-        public void apply(NotificationCompat.Builder builder,
-                          NotificationCompat.WearableExtender wearableOptions) {
-            builder.setPriority(mPriority);
-        }
+    public void apply(NotificationCompat.Builder builder,
+            NotificationCompat.WearableExtender wearableOptions){
+        builder.setPriority(mPriority);
     }
 }

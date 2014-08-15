@@ -12,38 +12,42 @@ import com.gdgkoreaandroid.multiscreencodelab.R;
 /**
  * Base class for notification actions presets.
  */
-public abstract class ActionsPreset extends NamedPreset {
+public class ActionsPreset extends NamedPreset {
 
-    public static final ActionsPreset ACTION_PRESET = new SingleActionPreset();
+    public static final ActionsPreset ACTION_PRESET = new ActionsPreset();
 
 
-    public ActionsPreset(int nameResId) {
-        super(nameResId);
+    public ActionsPreset() {
+        super(R.string.single_action);
     }
 
     /**
      * Apply the priority to a notification builder
      */
-    public abstract void apply(Context context, NotificationCompat.Builder builder,
-                               NotificationCompat.WearableExtender wearableOptions);
+    public void apply(Context context, NotificationCompat.Builder builder,
+                               NotificationCompat.WearableExtender wearableOptions){
+        NotificationCompat.Action action1 = new NotificationCompat.Action.Builder(R.drawable.ic_full_action, context.getString(R.string.example_action), NotificationUtil.getExamplePendingIntent(context,
+                R.string.example_action_clicked)).build();
 
-    private static class SingleActionPreset extends ActionsPreset {
-        public SingleActionPreset() {
-            super(R.string.single_action);
-        }
+        NotificationCompat.Action action2 = new NotificationCompat.Action.Builder(R.drawable.ic_full_action, context.getString(R.string.example_action), NotificationUtil.getExamplePendingIntent(context,
+                R.string.example_action_clicked)).build();
 
-        @Override
-        public void apply(Context context, NotificationCompat.Builder builder,
-                NotificationCompat.WearableExtender wearableOptions) {
-            builder.addAction(R.drawable.ic_full_action,
-                    context.getString(R.string.example_action),
-                    NotificationUtil.getExamplePendingIntent(context,
-                            R.string.example_action_clicked))
-                    .addAction(R.drawable.ic_full_action,
-                    context.getString(R.string.example_action),
-                    NotificationUtil.getExamplePendingIntent(context,
-                            R.string.example_action_clicked))
-                    .build();
-        }
+        builder
+                .setSmallIcon(R.drawable.ic_full_action)
+                .setContentTitle("ContentTitle")
+                .setContentText("abcdefg")
+                .extend(new NotificationCompat.WearableExtender().addAction(action1).addAction(action2))
+                .build();
+
+//            builder.addAction(R.drawable.ic_full_action,
+//                    context.getString(R.string.example_action),
+//                    NotificationUtil.getExamplePendingIntent(context,
+//                            R.string.example_action_clicked))
+//                    .addAction(R.drawable.ic_full_action,
+//                            context.getString(R.string.example_action),
+//                            NotificationUtil.getExamplePendingIntent(context,
+//                                    R.string.example_action_clicked))
+//                    .build();
+
     }
 }

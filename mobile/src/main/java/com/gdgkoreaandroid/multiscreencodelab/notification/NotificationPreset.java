@@ -10,19 +10,19 @@ import com.gdgkoreaandroid.multiscreencodelab.R;
 /**
  * Created by FlaShilver on 2014. 8. 10..
  */
-public abstract class NotificationPreset extends NamedPreset {
+public class NotificationPreset extends NamedPreset {
 
     public final int titleResId;
     public final int textResId;
 
     private static final String EXAMPLE_GROUP_KEY = "example";
 
-    public static final NotificationPreset PRESETS = new BasicNotificationPreset();
+    public static final NotificationPreset PRESETS = new NotificationPreset();
 
-    public NotificationPreset(int nameResId, int titleResId, int textResId) {
-        super(nameResId);
-        this.titleResId = titleResId;
-        this.textResId = textResId;
+    public NotificationPreset() {
+        super(R.string.basic_example);
+        this.titleResId = R.string.example_content_title;
+        this.textResId = R.string.example_content_text;
     }
 
     public static class BuildOptions {
@@ -36,25 +36,41 @@ public abstract class NotificationPreset extends NamedPreset {
 
         public BuildOptions(CharSequence titlePreset, CharSequence textPreset,
                             PriorityPreset priorityPreset, ActionsPreset actionsPreset,
-                            boolean includeLargeIcon, boolean hasContentIntent,Integer[] backgroundIds) {
+                            boolean includeLargeIcon, boolean hasContentIntent, Integer[] backgroundIds) {
             this.titlePreset = titlePreset;
             this.textPreset = textPreset;
             this.priorityPreset = priorityPreset;
             this.actionsPreset = actionsPreset;
             this.includeLargeIcon = includeLargeIcon;
             this.hasContentIntent = hasContentIntent;
-            this.backgroundIds = backgroundIds; }
+            this.backgroundIds = backgroundIds;
+        }
     }
 
-    /** Build a notification with this preset and the provided options */
-    public abstract Notification[] buildNotifications(Context context, BuildOptions options);
+    /**
+     * Build a notification with this preset and the provided options
+     */
+    public Notification[] buildNotifications(Context context, BuildOptions options) {
 
-    /** Whether actions are required to use this preset. */
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
+        NotificationCompat.WearableExtender wearableOptions =
+                new NotificationCompat.WearableExtender();
+        applyBasicOptions(context, builder, wearableOptions, options);
+        builder.extend(wearableOptions);
+
+        return new Notification[]{builder.build()};
+    }
+
+    /**
+     * Whether actions are required to use this preset.
+     */
     public boolean actionsRequired() {
         return false;
     }
 
-    /** Number of background pickers required */
+    /**
+     * Number of background pickers required
+     */
     public int countBackgroundPickersRequired() {
         return 0;
     }
@@ -76,22 +92,5 @@ public abstract class NotificationPreset extends NamedPreset {
                 R.string.content_intent_clicked));
 
         return builder;
-    }
-
-    private static class BasicNotificationPreset extends NotificationPreset {
-        public BasicNotificationPreset() {
-            super(R.string.basic_example, R.string.example_content_title,
-                    R.string.example_content_text);
-        }
-
-        @Override
-        public Notification[] buildNotifications(Context context, BuildOptions options) {
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
-            NotificationCompat.WearableExtender wearableOptions =
-                    new NotificationCompat.WearableExtender();
-            applyBasicOptions(context, builder, wearableOptions, options);
-            builder.extend(wearableOptions);
-            return new Notification[]{builder.build()};
-        }
     }
 }

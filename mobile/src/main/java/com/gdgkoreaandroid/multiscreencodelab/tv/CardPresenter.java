@@ -27,7 +27,6 @@ public class CardPresenter extends Presenter {
     private static int CARD_IMAGE_HEIGHT = 176;
 
     static class ViewHolder extends Presenter.ViewHolder {
-        private Movie mMovie;
         private ImageCardView mCardView;
         private Drawable mDefaultCardImage;
 
@@ -36,14 +35,6 @@ public class CardPresenter extends Presenter {
             mCardView = (ImageCardView) view;
             mDefaultCardImage
                     = new ColorDrawable(mContext.getResources().getColor(R.color.primary_dark_color));
-        }
-
-        public void setMovie(Movie m) {
-            mMovie = m;
-        }
-
-        public Movie getMovie() {
-            return mMovie;
         }
 
         protected void updateCardViewImage(URI uri) {
@@ -64,16 +55,8 @@ public class CardPresenter extends Presenter {
                 public Bitmap setImageBitmap(Bitmap bitmap) {
 
                     Bitmap resultBitmap = bitmap;
-
-                    if(bitmap.getWidth() != CARD_IMAGE_WIDTH
-                            && bitmap.getHeight() != CARD_IMAGE_HEIGHT) {
-                        resultBitmap = Bitmap.createScaledBitmap(bitmap,
-                                CARD_IMAGE_WIDTH, CARD_IMAGE_HEIGHT, true);
-                        bitmap.recycle();
-                    }
-
                     Drawable bitmapDrawable = new BitmapDrawable(
-                            mContext.getResources(), resultBitmap);
+                            mContext.getResources(), bitmap);
                     mCardView.setMainImage(bitmapDrawable);
                     return resultBitmap;
                 }
@@ -100,7 +83,6 @@ public class CardPresenter extends Presenter {
     @Override
     public void onBindViewHolder(Presenter.ViewHolder viewHolder, Object item) {
         Movie movie = (Movie) item;
-        ((ViewHolder) viewHolder).setMovie(movie);
 
         Log.d(TAG, "onBindViewHolder");
         if (movie.getCardImageUrl() != null) {

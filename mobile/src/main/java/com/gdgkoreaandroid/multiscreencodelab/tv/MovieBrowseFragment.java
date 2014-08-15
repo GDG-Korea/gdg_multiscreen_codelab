@@ -9,11 +9,7 @@ import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
 
 import com.gdgkoreaandroid.multiscreencodelab.R;
-import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -34,10 +30,11 @@ public class MovieBrowseFragment extends BrowseFragment {
     }
 
     private void setupUIElements() {
-        // setBadgeDrawable(getActivity().getResources().getDrawable(
-        // R.drawable.videos_by_google_banner));
-        setTitle(getString(R.string.browse_title)); // Badge, when set, takes precedent
-        // over title
+
+        //This method should be blank at the first, and be implemented by codelab attendees.
+
+        setTitle(getString(R.string.browse_title));
+
         setHeadersState(HEADERS_ENABLED);
         setHeadersTransitionOnBackEnabled(true);
 
@@ -48,28 +45,24 @@ public class MovieBrowseFragment extends BrowseFragment {
     private void setupAdapters() {
 
         //This method should be blank at the first, and be implemented by codelab attendees.
-        MovieList.setupMovies();
-        List<Movie> list = MovieList.MOVIE_LIST;
 
         ArrayObjectAdapter objectAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-        //CardPresenter cardPresenter = new CardPresenter();
 
-        int i;
-        for (i = 0; i < 3; i++) {
-            if (i != 0) {
-                Collections.shuffle(list);
-            }
+        for(String categoryName : MovieList.CATEGORY_LIST){
 
-            //ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(new CardPresenter());
-            ArrayObjectAdapter listRowAdapter = new ArrayObjectAdapter(new StringPresenter());
-            for (int j = 0; j < list.size(); j++) {
-                listRowAdapter.add(list.get(j));
-            }
+            HeaderItem headerItem = new HeaderItem(categoryName, null);
+            ArrayObjectAdapter movies = new ArrayObjectAdapter(new StringPresenter());
 
-            HeaderItem header = new HeaderItem(i, "CATEGORY:" + (i + 1), null);
-            objectAdapter.add(new ListRow(header, listRowAdapter));
+            //TODO Bonus Point!
+            //ArrayObjectAdapter movies = new ArrayObjectAdapter(new CardPresenter());
+
+            movies.addAll(0, MovieList.CATEGORY_MOVIE_MAP.get(categoryName));
+
+            ListRow listRow = new ListRow(headerItem, movies);
+            objectAdapter.add(listRow);
         }
 
         setAdapter(objectAdapter);
     }
 }
+

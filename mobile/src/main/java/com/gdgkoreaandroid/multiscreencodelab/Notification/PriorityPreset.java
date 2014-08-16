@@ -13,7 +13,7 @@ public class PriorityPreset extends NamedPreset {
 
     public static final PriorityPreset DEFAULT = new PriorityPreset(R.string.default_priority, Notification.PRIORITY_MAX) {
     };
-
+ 
 
     public PriorityPreset(int nameResId, int priority) {
         super(nameResId);

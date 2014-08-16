@@ -2,7 +2,6 @@ package com.gdgkoreaandroid.multiscreencodelab;
 
 import android.app.Application;
 
-import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
 import com.gdgkoreaandroid.multiscreencodelab.util.ImageDownloader;
 import com.google.android.gms.cast.CastMediaControlIntent;
 

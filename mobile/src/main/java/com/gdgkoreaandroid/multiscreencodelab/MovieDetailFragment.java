@@ -30,10 +30,6 @@ import android.widget.Toast;
 
 import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
-import com.gdgkoreaandroid.multiscreencodelab.notification.ActionsPreset;
-import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationPreset;
-import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationUtil;
-import com.gdgkoreaandroid.multiscreencodelab.notification.PriorityPreset;
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
@@ -59,14 +55,7 @@ public class MovieDetailFragment extends Fragment
         implements RemoteMediaPlayer.OnStatusUpdatedListener,
         RemoteMediaPlayer.OnMetadataUpdatedListener {
 
-    private static final int MSG_POST_NOTIFICATIONS = 0;
-    private static final long POST_NOTIFICATIONS_DELAY_MS = 200;
-
-    private Handler mHandler;
-
     private Movie mMovie;
-
-    private int postedNotificationCount = 0;
 
     private MediaRouter mMediaRouter;
     private MediaRouteSelector mMediaRouteSelector;
@@ -219,44 +208,6 @@ public class MovieDetailFragment extends Fragment
             }
         }
     };
-
-    /**
-     * Begin to re-post the sample notification(s).
-     */
-
-    private void postNotifications() {
-
-        NotificationPreset preset = NotificationPreset.PRESETS;
-
-        //Todo preset 제작하기.
-        CharSequence titlePreset = "GDG MultipleCodeLab";
-        CharSequence textPreset = "This is hellCodeLab";
-        PriorityPreset priorityPreset = PriorityPreset.DEFAULT;
-
-        ActionsPreset actionsPreset = ActionsPreset.ACTION_PRESET; //Todo : 어떤 Action을 제공할건지 여기서 결정해야함.
-
-        NotificationPreset.BuildOptions options = new NotificationPreset.BuildOptions(
-                titlePreset,
-                textPreset,
-                priorityPreset,
-                actionsPreset,
-                true,
-                true,
-                null);
-
-
-        Notification[] notifications = preset.buildNotifications(getActivity(), options);
-
-        // Post new notifications
-        for (int i = 0; i < notifications.length; i++) {
-            NotificationManagerCompat.from(getActivity()).notify(i, notifications[i]);
-        }
-        // Cancel any that are beyond the current count.
-        for (int i = notifications.length; i < postedNotificationCount; i++) {
-            NotificationManagerCompat.from(getActivity()).cancel(i);
-        }
-        postedNotificationCount = notifications.length;
-    }
 
 
     @Override

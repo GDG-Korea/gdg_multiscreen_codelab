@@ -110,7 +110,7 @@ public class MovieDetailFragment extends Fragment
     @Override
     public void onResume() {
         super.onResume();
-        updateNotifications(false /* cancelExisting */);
+        postNotifications();
         if(mApiClient!=null && mApiClient.isConnected()) {
             attachMediaPlayer();
             mRemotePlayer.requestStatus(mApiClient);
@@ -183,7 +183,7 @@ public class MovieDetailFragment extends Fragment
                 intent.putExtra(MovieList.ARG_ITEM_ID, mMovie.getId());
                 intent.putExtra(v.getContext().getString(R.string.should_start), true);
 
-                updateNotifications(false);
+                postNotifications();
 
                 v.getContext().startActivity(intent);
             } else {
@@ -229,28 +229,8 @@ public class MovieDetailFragment extends Fragment
     /**
      * Begin to re-post the sample notification(s).
      */
-    private void updateNotifications(boolean cancelExisting) {
-        // Disable messages to skip notification deleted messages during cancel.
-        getActivity().sendBroadcast(new Intent(NotificationIntentReceiver.ACTION_DISABLE_MESSAGES)
-                .setClass(getActivity(), NotificationIntentReceiver.class));
-
-        if (cancelExisting) { // 일단 항상 false이게 해놓음
-            // Cancel all existing notifications to trigger fresh-posting behavior: For example,
-            // switching from HIGH to LOW priority does not cause a reordering in Notification Shade.
-            NotificationManagerCompat.from(getActivity()).cancelAll();
-            postedNotificationCount = 0;
-
-            // Post the updated notifications on a delay to avoid a cancel+post race condition
-            // with notification manager.
-            mHandler.removeMessages(MSG_POST_NOTIFICATIONS);
-            mHandler.sendEmptyMessageDelayed(MSG_POST_NOTIFICATIONS, POST_NOTIFICATIONS_DELAY_MS);
-        } else {
-            postNotifications(); // 항상 동영상을 재생하면 이쪽으로 오게 되는걸로.
-        }
-    }
 
     private void postNotifications() {
-        getActivity().sendBroadcast(new Intent(NotificationIntentReceiver.ACTION_ENABLE_MESSAGES).setClass(getActivity(), NotificationIntentReceiver.class));
 
         NotificationPreset preset = NotificationPreset.PRESETS;
 

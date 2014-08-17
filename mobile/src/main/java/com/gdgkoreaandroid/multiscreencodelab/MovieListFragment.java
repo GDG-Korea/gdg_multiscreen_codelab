@@ -3,10 +3,21 @@ package com.gdgkoreaandroid.multiscreencodelab;
 import android.app.Activity;
 import android.app.ListFragment;
 import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.MediaRouteActionProvider;
+import android.support.v7.media.MediaRouter;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.Toast;
 
+import com.gdgkoreaandroid.multiscreencodelab.cast.CastListener;
+import com.gdgkoreaandroid.multiscreencodelab.cast.CastManager;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
+import com.google.android.gms.cast.CastDevice;
+import com.google.android.gms.common.ConnectionResult;
 
 /**
  * A MOVIE_LIST fragment representing a MOVIE_LIST of Movies. This fragment
@@ -17,7 +28,7 @@ import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
  * Activities containing this fragment MUST implement the {@link Callbacks}
  * interface.
  */
-public class MovieListFragment extends ListFragment {
+public class MovieListFragment extends ListFragment implements CastListener{
 
     /**
      * The serialization (saved instance state) Bundle key representing the
@@ -35,6 +46,8 @@ public class MovieListFragment extends ListFragment {
      * The current activated item position. Only used on tablets.
      */
     private int mActivatedPosition = ListView.INVALID_POSITION;
+
+
 
     /**
      * A callback interface that all activities containing this fragment must
@@ -70,6 +83,35 @@ public class MovieListFragment extends ListFragment {
         super.onCreate(savedInstanceState);
         MovieAdapter movieAdapter = new MovieAdapter(getActivity(), MovieList.MOVIE_LIST);
         setListAdapter(movieAdapter);
+
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        MyApplication.getCastManager().registerCastListener(this);
+        MyApplication.getCastManager().startDiscovery();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        MyApplication.getCastManager().stopDiscovery();
+        MyApplication.getCastManager().unregisterCastListener();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+
     }
 
     @Override
@@ -142,4 +184,64 @@ public class MovieListFragment extends ListFragment {
         mActivatedPosition = position;
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        // Inflate menu
+        inflater.inflate(R.menu.fragment_movie_list, menu);
+
+        MenuItem castMenu = menu.findItem(R.id.media_route_menu_item);
+        MediaRouteActionProvider mediaRouteActionProvider =
+                (MediaRouteActionProvider) MenuItemCompat.getActionProvider(castMenu);
+        mediaRouteActionProvider.setRouteSelector(
+                MyApplication.getCastManager().getMediaRouteSelector());
+    }
+
+    @Override
+    public void onRouteSelected(MediaRouter router, MediaRouter.RouteInfo route) {
+        MyApplication.getCastManager().connect();
+    }
+
+    @Override
+    public void onRouteUnselected(MediaRouter router, MediaRouter.RouteInfo route) {
+
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        CastDevice dev = MyApplication.getCastManager().getCurrentDevice();
+        Toast.makeText(getActivity(),
+                "Connected to " + dev.getFriendlyName(), Toast.LENGTH_SHORT).show();
+        MyApplication.getCastManager().launchApplication();
+    }
+
+    @Override
+    public void onConnectionSuspended(int cause) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Toast.makeText(getActivity(), "Failed to connect", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onApplicationLaunched(boolean wasLaunched) {
+
+    }
+
+    @Override
+    public void onApplicationStatusChanged() {
+
+    }
+
+    @Override
+    public void onVolumeChanged() {
+
+    }
+
+    @Override
+    public void onApplicationDisconnected(int statusCode) {
+
+    }
 }

@@ -1,22 +1,16 @@
 package com.gdgkoreaandroid.multiscreencodelab;
 
-import android.graphics.Color;
+import android.app.Fragment;
+import android.app.Notification;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-
-import android.app.Fragment;
-import android.app.Notification;
-
-import android.content.Intent;
-
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.MediaRouteActionProvider;
-import android.support.v7.media.MediaRouteSelector;
 import android.support.v7.media.MediaRouter;
-
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -24,33 +18,25 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.gdgkoreaandroid.multiscreencodelab.notification.ActionsPreset;
-import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationIntentReceiver;
-import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationPreset;
-import com.gdgkoreaandroid.multiscreencodelab.notification.PriorityPreset;
+import com.gdgkoreaandroid.multiscreencodelab.cast.CastListener;
+import com.gdgkoreaandroid.multiscreencodelab.cast.MediaListener;
 import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
-
-import com.google.android.gms.cast.Cast;
+import com.gdgkoreaandroid.multiscreencodelab.notification.ActionsPreset;
+import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationPreset;
+import com.gdgkoreaandroid.multiscreencodelab.notification.PriorityPreset;
 import com.google.android.gms.cast.CastDevice;
-import com.google.android.gms.cast.CastMediaControlIntent;
 import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.MediaMetadata;
 import com.google.android.gms.cast.MediaStatus;
 import com.google.android.gms.cast.RemoteMediaPlayer;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.common.images.WebImage;
-
-import java.io.IOException;
 
 /**
  * A fragment representing a single Movie detail screen.
@@ -59,8 +45,7 @@ import java.io.IOException;
  * on handsets.
  */
 public class MovieDetailFragment extends Fragment
-        implements RemoteMediaPlayer.OnStatusUpdatedListener,
-                    RemoteMediaPlayer.OnMetadataUpdatedListener,
+        implements CastListener, MediaListener,
                     Handler.Callback {
 
     private static final int MSG_POST_NOTIFICATIONS = 0;
@@ -72,17 +57,7 @@ public class MovieDetailFragment extends Fragment
 
     private int postedNotificationCount = 0;
 
-    private MediaRouter mMediaRouter;
-    private MediaRouteSelector mMediaRouteSelector;
-    private CastDevice mSelectedDevice;
-    private MediaRouteCallback mMediaRouteCallback;
-
-    private GoogleApiClient mApiClient;
-    private ConnectionStatusListener mConnectionStatusListener;
-    private RemoteMediaPlayer mRemotePlayer;
-
     private int mPlayerStatus = MediaStatus.PLAYER_STATE_IDLE;
-    private boolean mApplicationStarted = false;
 
     ImageView play;
     View darkLayer;
@@ -95,26 +70,11 @@ public class MovieDetailFragment extends Fragment
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mMediaRouter = MediaRouter.getInstance(getActivity().getApplicationContext());
-        mMediaRouteCallback = new MediaRouteCallback();
-        mConnectionStatusListener = new ConnectionStatusListener();
-
-        setHasOptionsMenu(true);
-
         if (getArguments().containsKey(MovieList.ARG_ITEM_ID)) {
             long id = getArguments().getLong(MovieList.ARG_ITEM_ID);
             mMovie = MovieList.getMovie(id);
         }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        postNotifications();
-        if(mApiClient!=null && mApiClient.isConnected()) {
-            attachMediaPlayer();
-            mRemotePlayer.requestStatus(mApiClient);
-        }
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -156,29 +116,39 @@ public class MovieDetailFragment extends Fragment
 
             play.setOnClickListener(mOnPlayVideoHandler);
             thumbContainer.setOnClickListener(mOnPlayVideoHandler);
+
+            if(MyApplication.getCastManager().isApplicationStarted()) {
+                MyApplication.getCastManager().attachMediaPlayer();
+            }
+            updateUiState();
         }
 
         return rootView;
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        startDiscovery();
+    public void onResume() {
+        super.onResume();
+        postNotifications();
+
+        MyApplication.getCastManager().registerCastListener(this);
+        MyApplication.getCastManager().registerMediaListener(this);
+        MyApplication.getCastManager().startDiscovery();
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-        stopDiscovery();
-        detachMediaPlayer();
+    public void onPause() {
+        super.onPause();
+        MyApplication.getCastManager().stopDiscovery();
+        MyApplication.getCastManager().unregisterMediaListener();
+        MyApplication.getCastManager().unregisterCastListener();
     }
 
     private final View.OnClickListener mOnPlayVideoHandler = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             // If there is no cast device connected, launch video player.
-            if(mApiClient==null || !mApiClient.isConnected()) {
+            if(!MyApplication.getCastManager().isConnected()) {
                 Intent intent = new Intent(v.getContext(), PlayerActivity.class);
                 intent.putExtra(MovieList.ARG_ITEM_ID, mMovie.getId());
                 intent.putExtra(v.getContext().getString(R.string.should_start), true);
@@ -187,11 +157,8 @@ public class MovieDetailFragment extends Fragment
 
                 v.getContext().startActivity(intent);
             } else {
-                // Play video on the cast device
-                switch (mPlayerStatus) {
+                switch(mPlayerStatus) {
                     case MediaStatus.PLAYER_STATE_IDLE:
-                        attachMediaPlayer();
-
                         MediaMetadata metadata = new MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE);
                         metadata.putString(MediaMetadata.KEY_TITLE, mMovie.getTitle());
                         metadata.putString(MediaMetadata.KEY_STUDIO, mMovie.getStudio());
@@ -202,26 +169,20 @@ public class MovieDetailFragment extends Fragment
                                 .setContentType("video/mp4")
                                 .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED).build();
 
-                        mRemotePlayer.load(mApiClient, info, true)
-                            .setResultCallback(new ResultCallback<RemoteMediaPlayer.MediaChannelResult>() {
-                                @Override
-                                public void onResult(RemoteMediaPlayer.MediaChannelResult mediaChannelResult) {
-                                    if (!mediaChannelResult.getStatus().isSuccess()) {
-                                        Toast.makeText(getActivity().getApplicationContext(),
-                                                "Failed to play", Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                            });
+
+                        MyApplication.getCastManager().loadMedia(info);
                         break;
 
                     case MediaStatus.PLAYER_STATE_PAUSED:
-                        mRemotePlayer.play(mApiClient);
+                        MyApplication.getCastManager().playMedia();
                         break;
 
                     case MediaStatus.PLAYER_STATE_PLAYING:
-                        mRemotePlayer.pause(mApiClient);
+                        MyApplication.getCastManager().pauseMedia();
                         break;
                 }
+                // Play video on the cast device
+
             }
         }
     };
@@ -283,77 +244,91 @@ public class MovieDetailFragment extends Fragment
         MenuItem castMenu = menu.findItem(R.id.media_route_menu_item);
         MediaRouteActionProvider mediaRouteActionProvider =
                 (MediaRouteActionProvider) MenuItemCompat.getActionProvider(castMenu);
-        mediaRouteActionProvider.setRouteSelector(mMediaRouteSelector);
-    }
-
-    private void startDiscovery() {
-        mMediaRouteSelector = new MediaRouteSelector.Builder()
-                .addControlCategory(CastMediaControlIntent.categoryForCast(
-                        MyApplication.MEDIA_RECEIVER_APPLICATION_ID)).build();
-        mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouteCallback,
-                MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
-    }
-
-    private void attachMediaPlayer() {
-        if (mRemotePlayer!=null) {
-            return;
-        }
-
-        mRemotePlayer = new RemoteMediaPlayer();
-        mRemotePlayer.setOnStatusUpdatedListener(MovieDetailFragment.this);
-        mRemotePlayer.setOnMetadataUpdatedListener(this);
-
-        try{
-            Cast.CastApi.setMessageReceivedCallbacks(
-                    mApiClient, mRemotePlayer.getNamespace(), mRemotePlayer);
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-    }
-
-    private void detachMediaPlayer() {
-        if(mRemotePlayer!=null && mApiClient !=null) {
-            try {
-                Cast.CastApi.removeMessageReceivedCallbacks(
-                        mApiClient, mRemotePlayer.getNamespace());
-            }catch (IOException e){
-                e.printStackTrace();
-            }
-        }
-        mRemotePlayer = null;
-    }
-
-    private void stopDiscovery() {
-        mMediaRouter.removeCallback(mMediaRouteCallback);
-        mMediaRouteSelector = null;
-    }
-
-    private void tearDown() {
-        if (mApiClient != null) {
-            if (mApplicationStarted) {
-                if (mApiClient.isConnected()) {
-                    Cast.CastApi.stopApplication(mApiClient);
-                    mApiClient.disconnect();
-                }
-                mApplicationStarted = false;
-                mPlayerStatus = MediaStatus.PLAYER_STATE_IDLE;
-            }
-            mApiClient = null;
-        }
-        mSelectedDevice = null;
+        mediaRouteActionProvider.setRouteSelector(
+                MyApplication.getCastManager().getMediaRouteSelector());
     }
 
     @Override
-    public void onMetadataUpdated() {
+    public void onMediaLoaded(RemoteMediaPlayer.MediaChannelResult result) {
 
     }
 
     @Override
-    public void onStatusUpdated() {
-        MediaStatus status = mRemotePlayer.getMediaStatus();
+    public void onMediaLoadFailed(RemoteMediaPlayer.MediaChannelResult result) {
+
+    }
+
+    @Override
+    public void onMediaControl(int controlType, RemoteMediaPlayer.MediaChannelResult result) {
+
+    }
+
+    @Override
+    public void onMediaMetadataUpdated() {
+
+    }
+
+    @Override
+    public void onMediaStatusUpdated(MediaStatus status) {
         mPlayerStatus = status.getPlayerState();
 
         // Set controller visibility according to playback state.
+        updateUiState();
+    }
+
+    @Override
+    public void onRouteSelected(MediaRouter router, MediaRouter.RouteInfo route) {
+        MyApplication.getCastManager().connect();
+    }
+
+    @Override
+    public void onRouteUnselected(MediaRouter router, MediaRouter.RouteInfo route) {
+        mPlayerStatus = MediaStatus.PLAYER_STATE_IDLE;
+        updateUiState();
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        CastDevice dev = MyApplication.getCastManager().getCurrentDevice();
+        Toast.makeText(getActivity(),
+                "Connected to "+dev.getFriendlyName(), Toast.LENGTH_SHORT).show();
+        MyApplication.getCastManager().launchApplication();
+    }
+
+    @Override
+    public void onConnectionSuspended(int cause) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Toast.makeText(getActivity(), "Failed to connect", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onApplicationLaunched(boolean wasLaunched) {
+        MyApplication.getCastManager().attachMediaPlayer();
+    }
+
+    @Override
+    public void onApplicationStatusChanged() {
+
+    }
+
+    @Override
+    public void onVolumeChanged() {
+
+    }
+
+    @Override
+    public void onApplicationDisconnected(int statusCode) {
+
+    }
+
+    private void updateUiState() {
+        darkLayer.setVisibility(
+                MyApplication.getCastManager().isApplicationStarted() ? View.VISIBLE : View.GONE);
+
         switch(mPlayerStatus){
             case MediaStatus.PLAYER_STATE_PLAYING:
                 play.setVisibility(View.VISIBLE);
@@ -372,76 +347,6 @@ public class MovieDetailFragment extends Fragment
                 play.setVisibility(View.GONE);
                 loadProgress.setVisibility(View.VISIBLE);
                 break;
-        }
-    }
-
-    private class MediaRouteCallback extends MediaRouter.Callback {
-
-        @Override
-        public void onRouteSelected(MediaRouter router, MediaRouter.RouteInfo route) {
-            super.onRouteSelected(router, route);
-            mSelectedDevice = CastDevice.getFromBundle(route.getExtras());
-
-            mApiClient = new GoogleApiClient.Builder(getActivity())
-                    .addApi(Cast.API, Cast.CastOptions.builder(mSelectedDevice, mCastClientListener).build())
-                    .addConnectionCallbacks(mConnectionStatusListener)
-                    .addOnConnectionFailedListener(mConnectionStatusListener)
-                    .build();
-            mApiClient.connect();
-
-            darkLayer.setBackgroundColor(Color.parseColor("#66000000"));
-        }
-
-        @Override
-        public void onRouteUnselected(MediaRouter router, MediaRouter.RouteInfo route) {
-            super.onRouteUnselected(router, route);
-            tearDown();
-
-            darkLayer.setBackgroundColor(Color.parseColor("#00000000"));
-        }
-    }
-
-    private Cast.Listener mCastClientListener = new Cast.Listener() {
-
-        @Override
-        public void onApplicationDisconnected(int statusCode) {
-            super.onApplicationDisconnected(statusCode);
-
-        }
-    };
-
-    private class ConnectionStatusListener
-            implements GoogleApiClient.ConnectionCallbacks,
-            GoogleApiClient.OnConnectionFailedListener {
-        @Override
-        public void onConnected(Bundle bundle) {
-            Cast.CastApi.launchApplication(mApiClient,
-                MyApplication.MEDIA_RECEIVER_APPLICATION_ID, false)
-
-                .setResultCallback(new ResultCallback<Cast.ApplicationConnectionResult>() {
-                    @Override
-                    public void onResult(Cast.ApplicationConnectionResult applicationConnectionResult) {
-                        Status status = applicationConnectionResult.getStatus();
-
-                        if (status.isSuccess()) {
-                            mApplicationStarted = true;
-                        } else {
-                            tearDown();
-                        }
-                    }
-                });
-
-        }
-
-        @Override
-        public void onConnectionSuspended(int cause) {
-
-        }
-
-        @Override
-        public void onConnectionFailed(ConnectionResult connectionResult) {
-            Toast.makeText(getActivity().getApplication(), "Failed to connect.", Toast.LENGTH_SHORT).show();
-            tearDown();
         }
     }
 }

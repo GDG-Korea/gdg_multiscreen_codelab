@@ -2,14 +2,13 @@ package com.gdgkoreaandroid.multiscreencodelab;
 
 import android.app.Application;
 
-import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
+import com.gdgkoreaandroid.multiscreencodelab.cast.CastManager;
 import com.gdgkoreaandroid.multiscreencodelab.util.ImageDownloader;
 import com.google.android.gms.cast.CastMediaControlIntent;
 
 public class MyApplication extends Application {
 
-    public static String MEDIA_RECEIVER_APPLICATION_ID =
-            CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID;
+    private static CastManager sCastManager;
 
     private static ImageDownloader sImageDownloader;
 
@@ -18,9 +17,15 @@ public class MyApplication extends Application {
         super.onCreate();
         //initialize image downloader.
         sImageDownloader = new ImageDownloader();
+
+        sCastManager = CastManager.getInstance(getApplicationContext());
     }
 
     public static ImageDownloader getImageDownloaderInstance(){
         return sImageDownloader;
+    }
+
+    public static CastManager getCastManager() {
+        return sCastManager;
     }
 }

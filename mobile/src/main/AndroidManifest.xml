@@ -37,6 +37,7 @@
         </activity>
 
         <!--activities for tv-->
+
         <activity
             android:name=".tv.TvMovieBrowseActivity"
             android:label="@string/title_activity_my"

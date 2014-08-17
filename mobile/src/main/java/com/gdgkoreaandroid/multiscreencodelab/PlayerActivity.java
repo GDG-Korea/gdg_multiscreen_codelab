@@ -8,12 +8,12 @@ import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.MediaRouteActionProvider;
-import android.support.v7.media.MediaRouteSelector;
 import android.support.v7.media.MediaRouter;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -26,17 +26,25 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout.LayoutParams;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.gdgkoreaandroid.multiscreencodelab.cast.CastListener;
+import com.gdgkoreaandroid.multiscreencodelab.cast.MediaListener;
 import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
 import com.google.android.gms.cast.CastDevice;
-import com.google.android.gms.cast.CastMediaControlIntent;
+import com.google.android.gms.cast.MediaInfo;
+import com.google.android.gms.cast.MediaMetadata;
+import com.google.android.gms.cast.MediaStatus;
+import com.google.android.gms.cast.RemoteMediaPlayer;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.images.WebImage;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class PlayerActivity extends ActionBarActivity {
+public class PlayerActivity extends ActionBarActivity implements CastListener, MediaListener {
 
     private static final String TAG = "PlayerActivity";
 
@@ -71,6 +79,8 @@ public class PlayerActivity extends ActionBarActivity {
     private int mDuration;
     private DisplayMetrics mMetrics;
 
+    private int lastSeekPosition = 0;
+
     /*
      * List of various states that we can be in
      */
@@ -78,18 +88,11 @@ public class PlayerActivity extends ActionBarActivity {
         PLAYING, PAUSED, BUFFERING, IDLE;
     }
 
-    private MediaRouter mMediaRouter;
-    private MediaRouteSelector mMediaRouteSelector;
-    private CastDevice mSelectedDevice;
-    private MediaRouteCallback mMediaRouteCallback;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
-
-        mMediaRouter = MediaRouter.getInstance(getApplicationContext());
-        mMediaRouteCallback = new MediaRouteCallback();
 
         ActionBar actionBar = getActionBar();
         actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#33000000")));
@@ -107,15 +110,19 @@ public class PlayerActivity extends ActionBarActivity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        startDiscovery();
+    protected void onResume() {
+        super.onResume();
+
+        MyApplication.getCastManager().registerCastListener(this);
+        MyApplication.getCastManager().registerMediaListener(this);
+        MyApplication.getCastManager().startDiscovery();
     }
+
 
     @Override
     protected void onPause() {
         super.onPause();
-        Log.d(TAG, "onPause() was called");
+
         if (null != mSeekbarTimer) {
             mSeekbarTimer.cancel();
             mSeekbarTimer = null;
@@ -126,12 +133,10 @@ public class PlayerActivity extends ActionBarActivity {
         mVideoView.pause();
         mPlaybackState = PlaybackState.PAUSED;
         updatePlayButton(PlaybackState.PAUSED);
-    }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        stopDiscovery();
+        MyApplication.getCastManager().stopDiscovery();
+        MyApplication.getCastManager().unregisterMediaListener();
+        MyApplication.getCastManager().unregisterCastListener();
     }
 
     @Override
@@ -149,15 +154,16 @@ public class PlayerActivity extends ActionBarActivity {
         MenuItem castMenu = menu.findItem(R.id.media_route_menu_item);
         MediaRouteActionProvider mediaRouteActionProvider =
                 (MediaRouteActionProvider) MenuItemCompat.getActionProvider(castMenu);
-        mediaRouteActionProvider.setRouteSelector(mMediaRouteSelector);
+        mediaRouteActionProvider.setRouteSelector(
+                MyApplication.getCastManager().getMediaRouteSelector());
 
         return super.onCreateOptionsMenu(menu);
     }
 
     private void startVideoPlayer() {
         Bundle b = getIntent().getExtras();
-        long movidId = getIntent().getLongExtra(MovieList.ARG_ITEM_ID, MovieList.INVALID_ID);
-        mSelectedMovie = MovieList.getMovie(movidId);
+        long movieId = getIntent().getLongExtra(MovieList.ARG_ITEM_ID, MovieList.INVALID_ID);
+        mSelectedMovie = MovieList.getMovie(movieId);
 
         if (mSelectedMovie != null) {
             setTitle(mSelectedMovie.getTitle());
@@ -225,26 +231,19 @@ public class PlayerActivity extends ActionBarActivity {
         mControllersTimer.schedule(new HideControllersTask(), HIDE_CONTROLLER_TIME);
     }
 
-    private void updateControlersVisibility(boolean show) {
+    private void updateControllersVisibility(boolean show) {
         if (show) {
-            mControllers.setVisibility(View.VISIBLE);
+            // Show/Hide Controller UI only if using local player
+            if(!MyApplication.getCastManager().isApplicationStarted()) {
+                mControllers.setVisibility(View.VISIBLE);
+                getSupportActionBar().show();
+            }
         } else {
-            mControllers.setVisibility(View.INVISIBLE);
+            if(!MyApplication.getCastManager().isApplicationStarted()) {
+                mControllers.setVisibility(View.INVISIBLE);
+                getSupportActionBar().hide();
+            }
         }
-    }
-
-
-    private void startDiscovery() {
-        mMediaRouteSelector = new MediaRouteSelector.Builder()
-                .addControlCategory(CastMediaControlIntent.categoryForCast(
-                        MyApplication.MEDIA_RECEIVER_APPLICATION_ID)).build();
-        mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouteCallback,
-                MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
-    }
-
-    private void stopDiscovery() {
-        mMediaRouter.removeCallback(mMediaRouteCallback);
-        mMediaRouteSelector = null;
     }
 
     private class HideControllersTask extends TimerTask {
@@ -253,7 +252,7 @@ public class PlayerActivity extends ActionBarActivity {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    updateControlersVisibility(false);
+                    updateControllersVisibility(false);
                     mControlersVisible = false;
                 }
             });
@@ -270,7 +269,12 @@ public class PlayerActivity extends ActionBarActivity {
                 @Override
                 public void run() {
                     int currentPos = 0;
-                    currentPos = mVideoView.getCurrentPosition();
+
+                    if (MyApplication.getCastManager().isApplicationStarted()) {
+                        currentPos = (int) MyApplication.getCastManager().getMediaPlayer().getApproximateStreamPosition();
+                    }else {
+                        currentPos = mVideoView.getCurrentPosition();
+                    }
                     updateSeekbar(currentPos, mDuration);
                 }
             });
@@ -367,7 +371,7 @@ public class PlayerActivity extends ActionBarActivity {
 
         Log.v("keycode", "duration " + mDuration + " delta:" + delta);
         if (!mControlersVisible) {
-            updateControlersVisibility(true);
+            updateControllersVisibility(true);
         }
         switch (keyCode) {
             case KeyEvent.KEYCODE_DPAD_CENTER:
@@ -480,39 +484,136 @@ public class PlayerActivity extends ActionBarActivity {
 
     private final View.OnClickListener mPlayPauseHandler = new View.OnClickListener() {
         public void onClick(View v) {
-            Log.d(TAG, "clicked play pause button");
-
             if (!mControlersVisible) {
-                updateControlersVisibility(true);
+                updateControllersVisibility(true);
             }
 
             if (mPlaybackState == PlaybackState.PAUSED) {
                 mPlaybackState = PlaybackState.PLAYING;
                 updatePlayButton(mPlaybackState);
-                mVideoView.start();
+                if(MyApplication.getCastManager().isApplicationStarted()) {
+                    MyApplication.getCastManager().playMedia();
+                }else {
+                    mVideoView.start();
+                }
                 startControllersTimer();
             } else {
-                mVideoView.pause();
+                if(MyApplication.getCastManager().isApplicationStarted()) {
+                    MyApplication.getCastManager().pauseMedia();
+                }else {
+                    mVideoView.pause();
+                }
                 mPlaybackState = PlaybackState.PAUSED;
                 updatePlayButton(PlaybackState.PAUSED);
                 stopControllersTimer();
             }
+
         }
     };
 
-    private class MediaRouteCallback extends MediaRouter.Callback {
+    @Override
+    public void onRouteSelected(MediaRouter router, MediaRouter.RouteInfo route) {
+        // If connection succeeds, onConnected(Bundle) will be called
+        MyApplication.getCastManager().connect();
 
-        @Override
-        public void onRouteSelected(MediaRouter router, MediaRouter.RouteInfo route) {
-            super.onRouteSelected(router, route);
-            mSelectedDevice = CastDevice.getFromBundle(route.getExtras());
+        // Stop current playing session on phone
+        mVideoView.pause();
+        mPlaybackState = PlaybackState.PAUSED;
+        updatePlayButton(PlaybackState.PAUSED);
+        stopControllersTimer();
 
-        }
-
-        @Override
-        public void onRouteUnselected(MediaRouter router, MediaRouter.RouteInfo route) {
-            super.onRouteUnselected(router, route);
-            mSelectedDevice = null;
-        }
+        // Mark last playing position
+        lastSeekPosition = mVideoView.getCurrentPosition();
     }
+
+    @Override
+    public void onRouteUnselected(MediaRouter router, MediaRouter.RouteInfo route) {
+        // Switch player to local mode.
+        lastSeekPosition = 0;
+        mPlaybackState = PlaybackState.PAUSED;
+        updatePlayButton(PlaybackState.PAUSED);
+        startControllersTimer();
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        CastDevice dev = MyApplication.getCastManager().getCurrentDevice();
+        Toast.makeText(this,
+                "Connected to " + dev.getFriendlyName(), Toast.LENGTH_SHORT).show();
+        // If launch succeeds, onApplicationLaunched(boolean) will be called
+        MyApplication.getCastManager().launchApplication();
+    }
+
+    @Override
+    public void onConnectionSuspended(int cause) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onApplicationLaunched(boolean wasLaunched) {
+        MyApplication.getCastManager().attachMediaPlayer();
+
+        MediaMetadata metadata = new MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE);
+        metadata.putString(MediaMetadata.KEY_TITLE, mSelectedMovie.getTitle());
+        metadata.putString(MediaMetadata.KEY_STUDIO, mSelectedMovie.getStudio());
+        metadata.addImage(new WebImage(Uri.parse(mSelectedMovie.getCardImageUrl())));
+
+        MediaInfo info = new MediaInfo.Builder(mSelectedMovie.getVideoUrl())
+                .setMetadata(metadata)
+                .setContentType("video/mp4")
+                .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED).build();
+        // If media loaded without error, onMediaLoaded(MediaChannelResult) will be called
+        MyApplication.getCastManager().loadMedia(info);
+    }
+
+    @Override
+    public void onApplicationStatusChanged() {
+
+    }
+
+    @Override
+    public void onVolumeChanged() {
+
+    }
+
+    @Override
+    public void onApplicationDisconnected(int statusCode) {
+
+    }
+
+    @Override
+    public void onMediaLoaded(RemoteMediaPlayer.MediaChannelResult result) {
+        // Media is now playing on the Cast device.
+        mPlaybackState = PlaybackState.PLAYING;
+        updatePlayButton(PlaybackState.PLAYING);
+
+        // Resume last seek position
+        MyApplication.getCastManager().seekTo(lastSeekPosition);
+    }
+
+    @Override
+    public void onMediaLoadFailed(RemoteMediaPlayer.MediaChannelResult result) {
+
+    }
+
+    @Override
+    public void onMediaControl(int controlType, RemoteMediaPlayer.MediaChannelResult result) {
+
+    }
+
+    @Override
+    public void onMediaMetadataUpdated() {
+
+    }
+
+    @Override
+    public void onMediaStatusUpdated(MediaStatus status) {
+
+    }
+
 }

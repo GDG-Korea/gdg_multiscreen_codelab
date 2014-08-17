@@ -7,12 +7,15 @@ import android.os.Bundle;
 
 import com.gdgkoreaandroid.multiscreencodelab.R;
 
+/**
+ * Activtiy which hosts TvMovieBrowseFragment
+ */
 public class TvMovieBrowseActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_tv_browse);
+        setContentView(R.layout.activity_tv_fragment_dock);
 
         Fragment frag = new MovieBrowseFragment();
         FragmentTransaction transition = getFragmentManager().beginTransaction();

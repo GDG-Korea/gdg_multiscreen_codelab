@@ -25,6 +25,9 @@ import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * FullScreen video player activity with basic media control capabilities.
+ */
 public class TvPlayerActivity extends Activity {
 
     private static final String TAG = "TvPlayerActivity";

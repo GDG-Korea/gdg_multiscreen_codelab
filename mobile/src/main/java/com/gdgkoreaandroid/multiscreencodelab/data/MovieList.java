@@ -1,7 +1,11 @@
 package com.gdgkoreaandroid.multiscreencodelab.data;
 
+import android.util.Log;
+
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Random;
 
 public final class MovieList {
 
@@ -10,13 +14,14 @@ public final class MovieList {
      */
     public static final String ARG_ITEM_ID = "item_id";
     public static final long INVALID_ID = -1;
-    public static ArrayList<Movie> MOVIE_LIST;
+    public static final String[] CATEGORY_LIST;
 
-    public static synchronized List<Movie> setupMovies() {
+    static {
+        CATEGORY_LIST = new String[]{ "Action", "Comedy", "Horror", "Romance", "Drama" };
+    }
 
-        if( MOVIE_LIST != null ){
-            return MOVIE_LIST;
-        }
+    public static final ArrayList<Movie> MOVIE_LIST;
+    static {
 
         MOVIE_LIST = new ArrayList<Movie>();
         String title[] = {
@@ -57,17 +62,35 @@ public final class MovieList {
         };
 
         MOVIE_LIST.add(buildMovieInfo(title[0],
-                description, "Studio Zero", videoUrl[0], cardImageUrl[0], bgImageUrl[0]));
+                description, CATEGORY_LIST[0], videoUrl[0], cardImageUrl[0], bgImageUrl[0]));
         MOVIE_LIST.add(buildMovieInfo(title[1],
-                description, "Studio One", videoUrl[1], cardImageUrl[1], bgImageUrl[1]));
+                description, CATEGORY_LIST[1], videoUrl[1], cardImageUrl[1], bgImageUrl[1]));
         MOVIE_LIST.add(buildMovieInfo(title[2],
-                description, "Studio Two", videoUrl[2], cardImageUrl[2], bgImageUrl[2]));
+                description, CATEGORY_LIST[2], videoUrl[2], cardImageUrl[2], bgImageUrl[2]));
         MOVIE_LIST.add(buildMovieInfo(title[3],
-                description, "Studio Three", videoUrl[3], cardImageUrl[3], bgImageUrl[3]));
+                description, CATEGORY_LIST[3], videoUrl[3], cardImageUrl[3], bgImageUrl[3]));
         MOVIE_LIST.add(buildMovieInfo(title[4],
-                description, "Studio Four", videoUrl[4], cardImageUrl[4], bgImageUrl[4]));
+                description, CATEGORY_LIST[4], videoUrl[4], cardImageUrl[4], bgImageUrl[4]));
+    }
 
-        return MOVIE_LIST;
+    public static final HashMap< String, ArrayList<Movie> > CATEGORY_MOVIE_MAP;
+    static {
+        final Random rand = new Random();
+        final int movieListSize = MOVIE_LIST.size();
+        CATEGORY_MOVIE_MAP = new HashMap<String, ArrayList<Movie> >();
+
+        ArrayList<Movie> tempList = new ArrayList<Movie>();
+        tempList.addAll(MOVIE_LIST);
+
+        for(int i = 0; i < CATEGORY_LIST.length; ++i) {
+            Collections.shuffle(tempList);
+            final int randomCount = 3 + rand.nextInt(5);
+            ArrayList<Movie> movies = new ArrayList<Movie>();
+            for(int j = 0; j < randomCount; ++j) {
+                movies.add(tempList.get( j % movieListSize));
+            }
+            CATEGORY_MOVIE_MAP.put(CATEGORY_LIST[i], movies);
+        }
     }
 
     public static Movie getMovie(long id) {
@@ -78,6 +101,18 @@ public final class MovieList {
             }
         }
         return null;
+    }
+
+    public static Movie getPreviousMovie(Movie movie){
+        long id = movie.getId() + Movie.getCount();
+        Log.d("PreId", id-1+"");
+        return getMovie((id - 1) % Movie.getCount());
+    }
+
+    public static Movie getNextMovie(Movie movie){
+        long id = movie.getId();
+        Log.d("NextId", id+1+"");
+        return getMovie((id + 1) % Movie.getCount());
     }
 
     private static Movie buildMovieInfo(String title,

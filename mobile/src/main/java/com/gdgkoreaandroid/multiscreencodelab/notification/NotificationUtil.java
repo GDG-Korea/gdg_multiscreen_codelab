@@ -4,10 +4,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 
-import com.gdgkoreaandroid.multiscreencodelab.PlayerActivity;
-import com.gdgkoreaandroid.multiscreencodelab.R;
-import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
-
 public class NotificationUtil {
 
     public static final String SHOW_TOAST = "com.gdgkoreaandroid.multiscreencodelab.SHOW_TOAST";
@@ -31,26 +27,24 @@ public class NotificationUtil {
                 PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    public static PendingIntent getPlayPendingIntent(Context context, long nextMovieId) {
-
-        Intent intent = new Intent(context, PlayerActivity.class);
-        intent.putExtra(MovieList.ARG_ITEM_ID, nextMovieId);
-        return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-//        Intent intent = new Intent(NotificationIntentReceiver.PLAY)
-//                .setClass(context, NotificationIntentReceiver.class);
-//        return PendingIntent.getBroadcast(context, messageResId /* requestCode */, intent,
-//                PendingIntent.FLAG_UPDATE_CURRENT);
-
+    public static PendingIntent getPlayPendingIntent(Context context, int messageResId) {
+        Intent intent = new Intent(NotificationIntentReceiver.PLAY)
+                .setClass(context, NotificationIntentReceiver.class);
+        return PendingIntent.getBroadcast(context, messageResId /* requestCode */, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    public static PendingIntent getChangeMoviePendingIntent(Context context, long nextMovieId) {
-        Intent intent = new Intent(context, PlayerActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        intent.putExtra(MovieList.ARG_ITEM_ID, nextMovieId);
-        intent.putExtra(context.getString(R.string.should_start), true);
-        return PendingIntent.getActivity(context, (int) nextMovieId,
-                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    public static PendingIntent getNextPendingIntent(Context context, int messageResId) {
+        Intent intent = new Intent(NotificationIntentReceiver.PLAY_NEXT)
+                .setClass(context, NotificationIntentReceiver.class);
+        return PendingIntent.getBroadcast(context, messageResId /* requestCode */, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+    public static PendingIntent getPreviousPendingIntent(Context context, int messageResId) {
+        Intent intent = new Intent(NotificationIntentReceiver.PLAY_PREVIOUS)
+                .setClass(context, NotificationIntentReceiver.class);
+        return PendingIntent.getBroadcast(context, messageResId /* requestCode */, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     public static PendingIntent getStopPendingIntent(Context context, int messageResId) {

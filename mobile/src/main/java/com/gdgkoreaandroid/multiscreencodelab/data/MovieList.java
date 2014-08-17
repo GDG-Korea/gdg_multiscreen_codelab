@@ -1,5 +1,7 @@
 package com.gdgkoreaandroid.multiscreencodelab.data;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -77,12 +79,15 @@ public final class MovieList {
         final int movieListSize = MOVIE_LIST.size();
         CATEGORY_MOVIE_MAP = new HashMap<String, ArrayList<Movie> >();
 
+        ArrayList<Movie> tempList = new ArrayList<Movie>();
+        tempList.addAll(MOVIE_LIST);
+
         for(int i = 0; i < CATEGORY_LIST.length; ++i) {
-            Collections.shuffle(MOVIE_LIST);
+            Collections.shuffle(tempList);
             final int randomCount = 3 + rand.nextInt(5);
             ArrayList<Movie> movies = new ArrayList<Movie>();
             for(int j = 0; j < randomCount; ++j) {
-                movies.add(MOVIE_LIST.get( j % movieListSize));
+                movies.add(tempList.get( j % movieListSize));
             }
             CATEGORY_MOVIE_MAP.put(CATEGORY_LIST[i], movies);
         }
@@ -96,6 +101,18 @@ public final class MovieList {
             }
         }
         return null;
+    }
+
+    public static Movie getPreviousMovie(Movie movie){
+        long id = movie.getId() + Movie.getCount();
+        Log.d("PreId", id-1+"");
+        return getMovie((id - 1) % Movie.getCount());
+    }
+
+    public static Movie getNextMovie(Movie movie){
+        long id = movie.getId();
+        Log.d("NextId", id+1+"");
+        return getMovie((id + 1) % Movie.getCount());
     }
 
     private static Movie buildMovieInfo(String title,

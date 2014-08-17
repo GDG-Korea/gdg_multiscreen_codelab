@@ -1,6 +1,5 @@
 package com.gdgkoreaandroid.multiscreencodelab.tv;
 
-import android.app.Fragment;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -8,6 +7,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.DetailsFragment;
 import android.support.v17.leanback.widget.AbstractDetailsDescriptionPresenter;
 import android.support.v17.leanback.widget.Action;
@@ -15,10 +15,13 @@ import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.DetailsOverviewRow;
 import android.support.v17.leanback.widget.DetailsOverviewRowPresenter;
 import android.support.v17.leanback.widget.OnActionClickedListener;
+import android.util.DisplayMetrics;
 
+import com.gdgkoreaandroid.multiscreencodelab.MyApplication;
 import com.gdgkoreaandroid.multiscreencodelab.R;
 import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
+import com.gdgkoreaandroid.multiscreencodelab.util.DummyImageSetter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +53,7 @@ public class MovieDetailsFragment extends DetailsFragment {
 
         setupAdapters();
         //TODO Bonus Point!
-        //updateBackground(mSelectedMovie.getBackgroundImageURI());
+        updateBackground(mSelectedMovie.getBackgroundImageURI());
     }
 
     private void setupAdapters() {
@@ -95,6 +98,31 @@ public class MovieDetailsFragment extends DetailsFragment {
     }
 
     private void updateBackground(URI uri) {
-        //This method should be blank at the first, and be implemented by codelab attendees.
-   }
+
+        final BackgroundManager bgManager = BackgroundManager.getInstance(getActivity());
+        bgManager.attach(getActivity().getWindow());
+        final DisplayMetrics metrics = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
+
+        MyApplication.getImageDownloaderInstance().downloadImage(uri.toString(), new DummyImageSetter() {
+
+            @Override
+            public Bitmap setImageBitmap(Bitmap bitmap) {
+
+                Bitmap resultBitmap = bitmap;
+
+                int width = metrics.widthPixels;
+                int height = metrics.heightPixels;
+
+                if(bitmap.getWidth() != width || bitmap.getHeight() != height){
+                    Bitmap scaledBitmap = Bitmap.createScaledBitmap(
+                            bitmap, metrics.widthPixels, metrics.heightPixels, true);
+                    bitmap.recycle();
+                    resultBitmap = scaledBitmap;
+                }
+                bgManager.setBitmap(resultBitmap);
+                return resultBitmap;
+            }
+        });
+    }
 }

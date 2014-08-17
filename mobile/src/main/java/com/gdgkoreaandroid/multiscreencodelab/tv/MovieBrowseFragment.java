@@ -46,7 +46,7 @@ public class MovieBrowseFragment extends BrowseFragment{
         for(String categoryName : MovieList.CATEGORY_LIST){
             HeaderItem headerItem = new HeaderItem(categoryName, null);
 
-            ArrayObjectAdapter movies = new ArrayObjectAdapter(new StringPresenter());
+            ArrayObjectAdapter movies = new ArrayObjectAdapter(new CardPresenter());
             movies.addAll(0, MovieList.CATEGORY_MOVIE_MAP.get(categoryName));
 
             ListRow listRow = new ListRow(headerItem, movies);

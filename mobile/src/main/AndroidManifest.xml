@@ -36,6 +36,21 @@
                 android:value=".MovieListActivity" />
         </activity>
 
+        <!--activities for tv-->
+        <activity
+            android:name=".tv.TvMovieBrowseActivity"
+            android:label="@string/title_activity_my"
+            android:theme="@style/Theme.Leanback">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".tv.TvMovieDetailsActivity"
+            android:theme="@style/Theme.Leanback"/>
+        <activity android:name=".tv.TvPlayerActivity"
+            android:theme="@style/AppTheme.FullScreen"/>
+
         <!--receiver-->
         <receiver android:name=".notification.NotificationIntentReceiver"
             android:exported="false">

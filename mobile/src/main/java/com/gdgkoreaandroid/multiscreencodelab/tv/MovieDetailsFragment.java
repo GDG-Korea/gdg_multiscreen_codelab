@@ -2,6 +2,10 @@ package com.gdgkoreaandroid.multiscreencodelab.tv;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.DetailsFragment;
@@ -21,6 +25,8 @@ import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
 import com.gdgkoreaandroid.multiscreencodelab.util.DummyImageSetter;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 
 public class MovieDetailsFragment extends DetailsFragment {
@@ -30,6 +36,7 @@ public class MovieDetailsFragment extends DetailsFragment {
     private static final int ACTION_WATCH_TRAILER = 1;
 
     private Movie mSelectedMovie;
+    private Drawable mDefaultPreviewBitmap;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,6 +46,15 @@ public class MovieDetailsFragment extends DetailsFragment {
         long movieId = getActivity().getIntent().getLongExtra(MovieList.ARG_ITEM_ID, 0);
         mSelectedMovie = MovieList.getMovie(movieId);
 
+        try {
+            InputStream is = getActivity().getAssets().open("tv_users.jpg");
+            Bitmap bitmap = BitmapFactory.decodeStream(is);
+            mDefaultPreviewBitmap = new BitmapDrawable(getResources(), bitmap);
+            is.close();
+        } catch (IOException e) {
+            mDefaultPreviewBitmap
+                    = new ColorDrawable(getResources().getColor(R.color.primary_dark_color));
+        }
         setupAdapters();
 
         //TODO Bonus Point!
@@ -62,7 +78,7 @@ public class MovieDetailsFragment extends DetailsFragment {
 
         DetailsOverviewRowPresenter detailsOverviewRowPresenter
                 = new DetailsOverviewRowPresenter(detailsDescriptionPresenter);
-
+        detailsOverviewRowPresenter.setBackgroundColor(getResources().getColor(R.color.primary_color));
         detailsOverviewRowPresenter.setOnActionClickedListener(new OnActionClickedListener() {
             @Override
             public void onActionClicked(Action action) {
@@ -79,6 +95,7 @@ public class MovieDetailsFragment extends DetailsFragment {
         });
 
         DetailsOverviewRow row = new DetailsOverviewRow(mSelectedMovie);
+        row.setImageDrawable(mDefaultPreviewBitmap);
         row.addAction(new Action(ACTION_WATCH_TRAILER, getResources().getString(
                 R.string.watch_trailer_1), getResources().getString(R.string.watch_trailer_2)));
 

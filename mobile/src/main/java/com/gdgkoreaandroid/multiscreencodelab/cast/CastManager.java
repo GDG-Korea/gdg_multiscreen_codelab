@@ -130,6 +130,9 @@ public class CastManager implements
         mMediaRouter.removeCallback(mRouteCallback);
     }
 
+    /**
+     * Connect to Cast device.
+     */
     public void connect() {
         if(mCurrentDevice==null) {
             throw new IllegalStateException("No device selected.");
@@ -145,6 +148,9 @@ public class CastManager implements
         mApiClient.connect();
     }
 
+    /**
+     * Disconnect from Cast device.
+     */
     public void disconnect() {
         if(mApiClient.isConnected()) {
             Cast.CastApi.stopApplication(mApiClient);
@@ -152,6 +158,9 @@ public class CastManager implements
         }
     }
 
+    /**
+     * Launch selected application.
+     */
     public void launchApplication() {
         if(mApiClient==null) {
             throw new IllegalStateException("No client connected.");

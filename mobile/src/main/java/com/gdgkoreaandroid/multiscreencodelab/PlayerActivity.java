@@ -1,7 +1,6 @@
 package com.gdgkoreaandroid.multiscreencodelab;
 
 import android.app.ActionBar;
-import android.app.Notification;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,15 +10,10 @@ import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.MediaRouteActionProvider;
-import android.support.v7.media.MediaRouter;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -31,28 +25,18 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout.LayoutParams;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.VideoView;
 
-import com.gdgkoreaandroid.multiscreencodelab.cast.CastListener;
-import com.gdgkoreaandroid.multiscreencodelab.cast.MediaListener;
 import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
 import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationUtil;
-import com.google.android.gms.cast.CastDevice;
-import com.google.android.gms.cast.MediaInfo;
-import com.google.android.gms.cast.MediaMetadata;
-import com.google.android.gms.cast.MediaStatus;
-import com.google.android.gms.cast.RemoteMediaPlayer;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.images.WebImage;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class PlayerActivity extends ActionBarActivity implements CastListener, MediaListener {
+public class PlayerActivity extends ActionBarActivity {
 
     private static final String TAG = "PlayerActivity";
 
@@ -86,7 +70,6 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
     private int mDuration;
     private Bitmap mDefaultNotificationIcon;
 
-    private int lastSeekPosition = 0;
 
     /*
      * List of various states that we can be in
@@ -115,10 +98,6 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
     protected void onResume() {
         super.onResume();
 
-        MyApplication.getCastManager().registerCastListener(this);
-        MyApplication.getCastManager().registerMediaListener(this);
-        MyApplication.getCastManager().startDiscovery();
-
         startVideoPlayer();
         postWearNotification(mSelectedMovie);
 
@@ -145,10 +124,6 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
         mVideoView.pause();
         mPlaybackState = PlaybackState.PAUSED;
         updatePlayButton(PlaybackState.PAUSED);
-
-        MyApplication.getCastManager().stopDiscovery();
-        MyApplication.getCastManager().unregisterMediaListener();
-        MyApplication.getCastManager().unregisterCastListener();
     }
 
     @Override
@@ -162,15 +137,7 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.activity_player, menu);
-
-        // Prepare MediaRoute Action Provider
-        MenuItem castMenu = menu.findItem(R.id.media_route_menu_item);
-        MediaRouteActionProvider mediaRouteActionProvider =
-                (MediaRouteActionProvider) MenuItemCompat.getActionProvider(castMenu);
-        mediaRouteActionProvider.setRouteSelector(
-                MyApplication.getCastManager().getMediaRouteSelector());
-
+        
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -274,16 +241,11 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
 
     private void updateControllersVisibility(boolean show) {
         if (show) {
-            // Show/Hide Controller UI only if using local player
-            if(!MyApplication.getCastManager().isApplicationStarted()) {
-                mControllers.setVisibility(View.VISIBLE);
-                getSupportActionBar().show();
-            }
+            mControllers.setVisibility(View.VISIBLE);
+            getSupportActionBar().show();
         } else {
-            if(!MyApplication.getCastManager().isApplicationStarted()) {
-                mControllers.setVisibility(View.INVISIBLE);
-                getSupportActionBar().hide();
-            }
+            mControllers.setVisibility(View.INVISIBLE);
+            getSupportActionBar().hide();
         }
     }
 
@@ -545,18 +507,13 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
             if (mPlaybackState == PlaybackState.PAUSED) {
                 mPlaybackState = PlaybackState.PLAYING;
                 updatePlayButton(mPlaybackState);
-                if(MyApplication.getCastManager().isApplicationStarted()) {
-                    MyApplication.getCastManager().playMedia();
-                }else {
-                    mVideoView.start();
-                }
+
+                mVideoView.start();
+
                 startControllersTimer();
             } else {
-                if(MyApplication.getCastManager().isApplicationStarted()) {
-                    MyApplication.getCastManager().pauseMedia();
-                }else {
-                    mVideoView.pause();
-                }
+                mVideoView.pause();
+
                 mPlaybackState = PlaybackState.PAUSED;
                 updatePlayButton(PlaybackState.PAUSED);
                 stopControllersTimer();
@@ -565,150 +522,8 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
         }
     };
 
-    @Override
-    public void onRouteSelected(MediaRouter router, MediaRouter.RouteInfo route) {
-        // If connection succeeds, onConnected(Bundle) will be called
-        MyApplication.getCastManager().connect();
-
-        // Stop current playing session on phone
-        mVideoView.pause();
-        mPlaybackState = PlaybackState.PAUSED;
-        updatePlayButton(PlaybackState.PAUSED);
-        stopControllersTimer();
-
-        // Mark last playing position
-        lastSeekPosition = mVideoView.getCurrentPosition();
-    }
-
-    @Override
-    public void onRouteUnselected(MediaRouter router, MediaRouter.RouteInfo route) {
-        // Switch player to local mode.
-        lastSeekPosition = 0;
-        mPlaybackState = PlaybackState.PAUSED;
-        updatePlayButton(PlaybackState.PAUSED);
-        startControllersTimer();
-    }
-
-    @Override
-    public void onConnected(Bundle bundle) {
-        CastDevice dev = MyApplication.getCastManager().getCurrentDevice();
-        Toast.makeText(this,
-                "Connected to " + dev.getFriendlyName(), Toast.LENGTH_SHORT).show();
-        // If launch succeeds, onApplicationLaunched(boolean) will be called
-        MyApplication.getCastManager().launchApplication();
-    }
-
-    @Override
-    public void onConnectionSuspended(int cause) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-
-    }
-
-    @Override
-    public void onApplicationLaunched(boolean wasLaunched) {
-        MyApplication.getCastManager().attachMediaPlayer();
-
-        MediaMetadata metadata = new MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE);
-        metadata.putString(MediaMetadata.KEY_TITLE, mSelectedMovie.getTitle());
-        metadata.putString(MediaMetadata.KEY_STUDIO, mSelectedMovie.getStudio());
-        metadata.addImage(new WebImage(Uri.parse(mSelectedMovie.getCardImageUrl())));
-
-        MediaInfo info = new MediaInfo.Builder(mSelectedMovie.getVideoUrl())
-                .setMetadata(metadata)
-                .setContentType("video/mp4")
-                .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED).build();
-        // If media loaded without error, onMediaLoaded(MediaChannelResult) will be called
-        MyApplication.getCastManager().loadMedia(info);
-    }
-
-    @Override
-    public void onApplicationStatusChanged() {
-
-    }
-
-    @Override
-    public void onVolumeChanged() {
-
-    }
-
-    @Override
-    public void onApplicationDisconnected(int statusCode) {
-
-    }
-
-    @Override
-    public void onMediaLoaded(RemoteMediaPlayer.MediaChannelResult result) {
-        // Media is now playing on the Cast device.
-        mPlaybackState = PlaybackState.PLAYING;
-        updatePlayButton(PlaybackState.PLAYING);
-
-        // Resume last seek position
-        MyApplication.getCastManager().seekTo(lastSeekPosition);
-    }
-
-    @Override
-    public void onMediaLoadFailed(RemoteMediaPlayer.MediaChannelResult result) {
-
-    }
-
-    @Override
-    public void onMediaControl(int controlType, RemoteMediaPlayer.MediaChannelResult result) {
-
-    }
-
-    @Override
-    public void onMediaMetadataUpdated() {
-
-    }
-
-    @Override
-    public void onMediaStatusUpdated(MediaStatus status) {
-
-    }
 
     private void postWearNotification(Movie movie) {
         //This method should be implemented by codelab attendees
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-
-        builder.setContentTitle("Now Playing")
-                .setContentText(mSelectedMovie.getTitle())
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setLargeIcon(mDefaultNotificationIcon);
-
-        NotificationCompat.Action playpause = new NotificationCompat.Action.Builder(
-                R.drawable.ic_playnstop, getString(R.string.play),
-                NotificationUtil.getPlayOrPausePendingIntent(this, mPlaybackState)).build();
-
-        //builder.addAction(previousAction).addAction(nextAction);
-        NotificationCompat.WearableExtender wearableOptions =
-                new NotificationCompat.WearableExtender();
-
-        wearableOptions.setDisplayIntent(NotificationUtil.getChangeMoviePendingIntent(this, 1));
-
-        NotificationCompat.Action previousAction = new NotificationCompat.Action.Builder(
-                R.drawable.ic_previous,
-                getString(R.string.previous),
-                NotificationUtil.getChangeMoviePendingIntent(this,
-                        MovieList.getPreviousMovie(movie).getId())).build();
-
-        wearableOptions.addAction(playpause);
-        wearableOptions.setContentAction(0);
-
-        NotificationCompat.Action nextAction = new NotificationCompat.Action.Builder(
-                R.drawable.ic_next, getString(R.string.next),
-                NotificationUtil.getChangeMoviePendingIntent(this,
-                        MovieList.getNextMovie(movie).getId())).build();
-        wearableOptions.addAction(previousAction).addAction(nextAction);
-
-        builder.extend(wearableOptions);
-
-        Notification notification = builder.build();
-        NotificationManagerCompat.from(this).notify(
-                NotificationUtil.WEAR_NOTIFICAITON_ID, notification);
     }
 }

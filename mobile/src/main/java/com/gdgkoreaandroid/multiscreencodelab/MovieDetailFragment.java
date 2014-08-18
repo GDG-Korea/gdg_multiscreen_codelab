@@ -1,13 +1,9 @@
 package com.gdgkoreaandroid.multiscreencodelab;
 
 import android.app.Fragment;
-import android.app.Notification;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.MediaRouteActionProvider;
 import android.support.v7.media.MediaRouter;
@@ -27,9 +23,6 @@ import com.gdgkoreaandroid.multiscreencodelab.cast.CastListener;
 import com.gdgkoreaandroid.multiscreencodelab.cast.MediaListener;
 import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
-import com.gdgkoreaandroid.multiscreencodelab.notification.ActionsPreset;
-import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationPreset;
-import com.gdgkoreaandroid.multiscreencodelab.notification.PriorityPreset;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.MediaMetadata;
@@ -45,23 +38,15 @@ import com.google.android.gms.common.images.WebImage;
  * on handsets.
  */
 public class MovieDetailFragment extends Fragment
-        implements CastListener, MediaListener,
-                    Handler.Callback {
+        implements CastListener, MediaListener {
 
-    private static final int MSG_POST_NOTIFICATIONS = 0;
-    private static final long POST_NOTIFICATIONS_DELAY_MS = 200;
-
-    private Handler mHandler;
 
     private Movie mMovie;
-
-    private int postedNotificationCount = 0;
-
     private int mPlayerStatus = MediaStatus.PLAYER_STATE_IDLE;
 
-    ImageView play;
-    View darkLayer;
-    ProgressBar loadProgress;
+    private ImageView play;
+    private View darkLayer;
+    private ProgressBar loadProgress;
 
     public MovieDetailFragment() {
     }
@@ -81,8 +66,6 @@ public class MovieDetailFragment extends Fragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_movie_detail, container, false);
-
-        mHandler = new Handler(this);
 
         if (mMovie != null) {
 
@@ -129,8 +112,6 @@ public class MovieDetailFragment extends Fragment
     @Override
     public void onResume() {
         super.onResume();
-        postNotifications();
-
         MyApplication.getCastManager().registerCastListener(this);
         MyApplication.getCastManager().registerMediaListener(this);
         MyApplication.getCastManager().startDiscovery();
@@ -152,9 +133,6 @@ public class MovieDetailFragment extends Fragment
                 Intent intent = new Intent(v.getContext(), PlayerActivity.class);
                 intent.putExtra(MovieList.ARG_ITEM_ID, mMovie.getId());
                 intent.putExtra(v.getContext().getString(R.string.should_start), true);
-
-                postNotifications();
-
                 v.getContext().startActivity(intent);
             } else {
                 switch(mPlayerStatus) {
@@ -186,55 +164,6 @@ public class MovieDetailFragment extends Fragment
             }
         }
     };
-
-    /**
-     * Begin to re-post the sample notification(s).
-     */
-
-    private void postNotifications() {
-
-        NotificationPreset preset = NotificationPreset.PRESETS;
-
-        //Todo preset 제작하기.
-        CharSequence titlePreset = "GDG MultipleCodeLab";
-        CharSequence textPreset = "This is hellCodeLab";
-        PriorityPreset priorityPreset = PriorityPreset.DEFAULT;
-
-        ActionsPreset actionsPreset = ActionsPreset.ACTION_PRESET; //Todo : 어떤 Action을 제공할건지 여기서 결정해야함.
-
-        NotificationPreset.BuildOptions options = new NotificationPreset.BuildOptions(
-                titlePreset,
-                textPreset,
-                priorityPreset,
-                actionsPreset,
-                true,
-                true,
-                null);
-
-
-        Notification[] notifications = preset.buildNotifications(getActivity(), options);
-
-        // Post new notifications
-        for (int i = 0; i < notifications.length; i++) {
-            NotificationManagerCompat.from(getActivity()).notify(i, notifications[i]);
-        }
-        // Cancel any that are beyond the current count.
-        for (int i = notifications.length; i < postedNotificationCount; i++) {
-            NotificationManagerCompat.from(getActivity()).cancel(i);
-        }
-        postedNotificationCount = notifications.length;
-    }
-
-    @Override
-    public boolean handleMessage(Message message) {
-        switch (message.what) {
-            case MSG_POST_NOTIFICATIONS:
-                postNotifications();
-                return true;
-        }
-        return false;
-    }
-
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {

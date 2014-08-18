@@ -16,8 +16,6 @@ import android.support.v17.leanback.widget.DetailsOverviewRow;
 import android.support.v17.leanback.widget.DetailsOverviewRowPresenter;
 import android.support.v17.leanback.widget.OnActionClickedListener;
 import android.util.DisplayMetrics;
-import android.util.Log;
-import android.widget.Toast;
 
 import com.gdgkoreaandroid.multiscreencodelab.MyApplication;
 import com.gdgkoreaandroid.multiscreencodelab.R;
@@ -31,8 +29,6 @@ import java.net.URI;
 
 public class MovieDetailsFragment extends DetailsFragment {
 
-    private static final String TAG = "VideoDetailsFragment";
-
     private static final int ACTION_WATCH_TRAILER = 1;
 
     private Movie mSelectedMovie;
@@ -40,7 +36,6 @@ public class MovieDetailsFragment extends DetailsFragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Log.i(TAG, "onCreate DetailsFragment");
         super.onCreate(savedInstanceState);
 
         long movieId = getActivity().getIntent().getLongExtra(MovieList.ARG_ITEM_ID, 0);
@@ -55,15 +50,13 @@ public class MovieDetailsFragment extends DetailsFragment {
             mDefaultPreviewBitmap
                     = new ColorDrawable(getResources().getColor(R.color.primary_dark_color));
         }
-        setupAdapters();
 
+        setupAdapters();
         //TODO Bonus Point!
-        //updateBackground(mSelectedMovie.getBackgroundImageURI());
+        updateBackground(mSelectedMovie.getBackgroundImageURI());
     }
 
     private void setupAdapters() {
-
-        //This method should be blank at the first, and be implemented by codelab attendees.
 
         AbstractDetailsDescriptionPresenter detailsDescriptionPresenter
                 = new AbstractDetailsDescriptionPresenter() {
@@ -78,8 +71,8 @@ public class MovieDetailsFragment extends DetailsFragment {
 
         DetailsOverviewRowPresenter detailsOverviewRowPresenter
                 = new DetailsOverviewRowPresenter(detailsDescriptionPresenter);
-        detailsOverviewRowPresenter.setBackgroundColor(getResources().getColor(R.color.primary_color));
-        detailsOverviewRowPresenter.setOnActionClickedListener(new OnActionClickedListener() {
+        detailsOverviewRowPresenter.setOnActionClickedListener(new OnActionClickedListener(){
+
             @Override
             public void onActionClicked(Action action) {
                 if (action.getId() == ACTION_WATCH_TRAILER) {
@@ -88,16 +81,15 @@ public class MovieDetailsFragment extends DetailsFragment {
                     intent.putExtra(getResources().getString(R.string.should_start), true);
                     startActivity(intent);
                 }
-                else {
-                    Toast.makeText(getActivity(), action.toString(), Toast.LENGTH_SHORT).show();
-                }
             }
         });
 
+        detailsOverviewRowPresenter.setBackgroundColor(
+                getResources().getColor(R.color.primary_color));
+
         DetailsOverviewRow row = new DetailsOverviewRow(mSelectedMovie);
         row.setImageDrawable(mDefaultPreviewBitmap);
-        row.addAction(new Action(ACTION_WATCH_TRAILER, getResources().getString(
-                R.string.watch_trailer_1), getResources().getString(R.string.watch_trailer_2)));
+        row.addAction(new Action(ACTION_WATCH_TRAILER, "Watch Movie", "Free"));
 
         ArrayObjectAdapter adapter = new ArrayObjectAdapter(detailsOverviewRowPresenter);
         adapter.add(row);
@@ -106,34 +98,31 @@ public class MovieDetailsFragment extends DetailsFragment {
     }
 
     private void updateBackground(URI uri) {
-        //This method should be blank at the first, and be implemented by codelab attendees.
 
         final BackgroundManager bgManager = BackgroundManager.getInstance(getActivity());
         bgManager.attach(getActivity().getWindow());
-
         final DisplayMetrics metrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
-        MyApplication.getImageDownloaderInstance().downloadImage(
-                uri.toString(), new DummyImageSetter() {
+        MyApplication.getImageDownloaderInstance().downloadImage(uri.toString(), new DummyImageSetter() {
 
-                    @Override
-                    public Bitmap setImageBitmap(Bitmap bitmap) {
+            @Override
+            public Bitmap setImageBitmap(Bitmap bitmap) {
 
-                        Bitmap resultBitmap = bitmap;
+                Bitmap resultBitmap = bitmap;
 
-                        int width = metrics.widthPixels;
-                        int height = metrics.heightPixels;
+                int width = metrics.widthPixels;
+                int height = metrics.heightPixels;
 
-                        if(bitmap.getWidth() != width || bitmap.getHeight() != height){
-                            Bitmap scaledBitmap = Bitmap.createScaledBitmap(
-                                    bitmap, metrics.widthPixels, metrics.heightPixels, true);
-                            bitmap.recycle();
-                            resultBitmap = scaledBitmap;
-                        }
-                        bgManager.setBitmap(resultBitmap);
-                        return resultBitmap;
-                    }
-                });
+                if(bitmap.getWidth() != width || bitmap.getHeight() != height){
+                    Bitmap scaledBitmap = Bitmap.createScaledBitmap(
+                            bitmap, metrics.widthPixels, metrics.heightPixels, true);
+                    bitmap.recycle();
+                    resultBitmap = scaledBitmap;
+                }
+                bgManager.setBitmap(resultBitmap);
+                return resultBitmap;
+            }
+        });
     }
 }

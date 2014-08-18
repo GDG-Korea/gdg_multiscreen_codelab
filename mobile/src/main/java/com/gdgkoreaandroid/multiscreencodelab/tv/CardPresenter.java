@@ -7,7 +7,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.Presenter;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -19,12 +18,15 @@ import com.gdgkoreaandroid.multiscreencodelab.util.ImageSetter;
 
 import java.net.URI;
 
+/**
+ * Simple presenter, which binds a {@link com.gdgkoreaandroid.multiscreencodelab.data.Movie} instance
+ * to a ImageCardView.
+ */
 public class CardPresenter extends Presenter {
-    private static final String TAG = "CardPresenter";
 
     private static Context mContext;
-    private static int CARD_IMAGE_WIDTH = 313;
-    private static int CARD_IMAGE_HEIGHT = 176;
+    private static final int CARD_IMAGE_WIDTH = 313;
+    private static final int CARD_IMAGE_HEIGHT = 176;
 
     static class ViewHolder extends Presenter.ViewHolder {
         private ImageCardView mCardView;
@@ -53,17 +55,28 @@ public class CardPresenter extends Presenter {
 
                 @Override
                 public Bitmap setImageBitmap(Bitmap bitmap) {
-
-                    Bitmap resultBitmap = bitmap;
+                    Bitmap scaledBitmap = resizeBitmap(bitmap, CARD_IMAGE_WIDTH, CARD_IMAGE_HEIGHT);
                     Drawable bitmapDrawable = new BitmapDrawable(
-                            mContext.getResources(), bitmap);
+                            mContext.getResources(), scaledBitmap);
                     mCardView.setMainImage(bitmapDrawable);
-                    return resultBitmap;
+                    return scaledBitmap;
                 }
 
                 @Override
                 public void setErrorDrawable() {
                     mCardView.setMainImage(mDefaultCardImage);
+                }
+
+                private Bitmap resizeBitmap(Bitmap bitmap, int width, int height) {
+                    if( bitmap == null ||
+                            (bitmap.getWidth() == width && bitmap.getHeight() == height) ) {
+                        return bitmap;
+                    }
+
+                    Bitmap scaledBitmap = Bitmap.createScaledBitmap(
+                            bitmap, CARD_IMAGE_WIDTH, CARD_IMAGE_HEIGHT, true);
+                    bitmap.recycle();
+                    return scaledBitmap;
                 }
             });
         }
@@ -71,7 +84,6 @@ public class CardPresenter extends Presenter {
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
-        Log.d(TAG, "onCreateViewHolder");
         mContext = parent.getContext();
 
         ImageCardView cardView = new ImageCardView(mContext);
@@ -84,7 +96,6 @@ public class CardPresenter extends Presenter {
     public void onBindViewHolder(Presenter.ViewHolder viewHolder, Object item) {
         Movie movie = (Movie) item;
 
-        Log.d(TAG, "onBindViewHolder");
         if (movie.getCardImageUrl() != null) {
             ((ViewHolder) viewHolder).mCardView.setTitleText(movie.getTitle());
             ((ViewHolder) viewHolder).mCardView.setContentText(movie.getStudio());
@@ -96,11 +107,9 @@ public class CardPresenter extends Presenter {
 
     @Override
     public void onUnbindViewHolder(Presenter.ViewHolder viewHolder) {
-        Log.d(TAG, "onUnbindViewHolder");
     }
 
     @Override
     public void onViewAttachedToWindow(Presenter.ViewHolder viewHolder) {
-        Log.d(TAG, "onViewAttachedToWindow");
     }
 }

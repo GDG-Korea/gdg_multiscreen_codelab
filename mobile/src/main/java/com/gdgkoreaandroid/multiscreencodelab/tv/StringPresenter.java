@@ -10,8 +10,11 @@ import android.widget.TextView;
 import com.gdgkoreaandroid.multiscreencodelab.R;
 import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 
+/**
+ * Simple presenter, which binds a {@link com.gdgkoreaandroid.multiscreencodelab.data.Movie}
+ * to a plain {@link android.widget.TextView}
+ */
 public class StringPresenter extends Presenter {
-    private static final String TAG = "StringPresenter";
 
     private static final int STRING_WIDTH = 320;
     private static final int STRING_HEIGHT = 240;
@@ -31,10 +34,10 @@ public class StringPresenter extends Presenter {
         Context context = parent.getContext();
         TextView textView = new TextView(context);
         textView.setLayoutParams(new ViewGroup.LayoutParams(STRING_WIDTH, STRING_HEIGHT));
-        textView.setBackgroundColor(context.getResources().getColor(R.color.primary_dark_color));
         textView.setGravity(Gravity.CENTER);
         textView.setFocusable(true);
         textView.setFocusableInTouchMode(true);
+        textView.setBackgroundColor(context.getResources().getColor(R.color.primary_color));
         return new ViewHolder(textView);
     }
 

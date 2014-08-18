@@ -13,12 +13,15 @@ import com.gdgkoreaandroid.multiscreencodelab.R;
 import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
 
+/**
+ * Activtiy which hosts TvMovieBrowseFragment
+ */
 public class TvMovieBrowseActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_tv_browse);
+        setContentView(R.layout.activity_tv_fragment_dock);
 
         Fragment frag = new MovieBrowseFragment();
         FragmentTransaction transition = getFragmentManager().beginTransaction();
@@ -28,7 +31,7 @@ public class TvMovieBrowseActivity extends Activity {
         ((BrowseFragment)frag).setOnItemClickedListener(new OnItemClickedListener() {
             @Override
             public void onItemClicked(Object item, Row row) {
-                if( item instanceof Movie ) {
+                if( item instanceof Movie) {
                     long movie_id = ((Movie) item).getId();
                     Intent intent = new Intent(TvMovieBrowseActivity.this, TvMovieDetailsActivity.class);
                     intent.putExtra(MovieList.ARG_ITEM_ID, movie_id);
@@ -36,5 +39,6 @@ public class TvMovieBrowseActivity extends Activity {
                 }
             }
         });
+
     }
 }

@@ -37,30 +37,18 @@
         </activity>
 
         <!--activities for tv-->
-
-        <activity
-            android:name=".tv.TvMovieBrowseActivity"
-            android:label="@string/title_activity_my"
+        <activity android:name=".tv.TvMovieBrowseActivity"
             android:theme="@style/Theme.Leanback">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity android:name=".tv.TvMovieDetailsActivity"
             android:theme="@style/Theme.Leanback"/>
         <activity android:name=".tv.TvPlayerActivity"
             android:theme="@style/AppTheme.FullScreen"/>
-
-        <!--receiver-->
-        <receiver android:name=".notification.NotificationIntentReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.example.android.support.wearable.notifications.ACTION_EXAMPLE" />
-                <action android:name="com.example.android.support.wearable.notifications.ACTION_ENABLE_MESSAGES" />
-                <action android:name="com.example.android.support.wearable.notifications.ACTION_DISABLE_MESSAGES" />
-            </intent-filter>
-        </receiver>
 
         <!--metadata-->
         <meta-data android:name="com.google.android.gms.version"

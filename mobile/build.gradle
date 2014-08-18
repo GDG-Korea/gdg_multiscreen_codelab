@@ -4,7 +4,6 @@ android {
 
     //Setting compiledSdkVersion as 'android-L' for building app targeted Android TV.
     compileSdkVersion 'android-L'
-    //compileSdkVersion 20
 
     buildToolsVersion "20.0.0"
 

@@ -16,7 +16,7 @@ import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
  * create an instance of this fragment.
  *
  */
-public class MovieBrowseFragment extends BrowseFragment {
+public class MovieBrowseFragment extends BrowseFragment{
 
     public MovieBrowseFragment() {
         // Required empty public constructor
@@ -30,32 +30,23 @@ public class MovieBrowseFragment extends BrowseFragment {
     }
 
     private void setupUIElements() {
-
         //This method should be blank at the first, and be implemented by codelab attendees.
-
         setTitle(getString(R.string.browse_title));
 
         setHeadersState(HEADERS_ENABLED);
         setHeadersTransitionOnBackEnabled(true);
 
-        // set fastLane (or headers) background color
         setBrandColor(getResources().getColor(R.color.primary_color));
     }
 
     private void setupAdapters() {
 
-        //This method should be blank at the first, and be implemented by codelab attendees.
-
         ArrayObjectAdapter objectAdapter = new ArrayObjectAdapter(new ListRowPresenter());
 
         for(String categoryName : MovieList.CATEGORY_LIST){
-
             HeaderItem headerItem = new HeaderItem(categoryName, null);
-            ArrayObjectAdapter movies = new ArrayObjectAdapter(new StringPresenter());
 
-            //TODO Bonus Point!
-            //ArrayObjectAdapter movies = new ArrayObjectAdapter(new CardPresenter());
-
+            ArrayObjectAdapter movies = new ArrayObjectAdapter(new CardPresenter());
             movies.addAll(0, MovieList.CATEGORY_MOVIE_MAP.get(categoryName));
 
             ListRow listRow = new ListRow(headerItem, movies);

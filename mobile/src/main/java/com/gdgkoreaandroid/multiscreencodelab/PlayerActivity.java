@@ -1,7 +1,10 @@
 package com.gdgkoreaandroid.multiscreencodelab;
 
 import android.app.ActionBar;
+import android.app.Notification;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.media.MediaPlayer;
@@ -11,6 +14,8 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.MediaRouteActionProvider;
@@ -33,6 +38,7 @@ import com.gdgkoreaandroid.multiscreencodelab.cast.CastListener;
 import com.gdgkoreaandroid.multiscreencodelab.cast.MediaListener;
 import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
+import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationUtil;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.MediaMetadata;
@@ -41,6 +47,8 @@ import com.google.android.gms.cast.RemoteMediaPlayer;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.images.WebImage;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -60,7 +68,6 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
     private static final double MEDIA_BAR_HEIGHT = 0.1;
     private static final double MEDIA_BAR_WIDTH = 0.9;
 
-
     private VideoView mVideoView;
     private TextView mStartText;
     private TextView mEndText;
@@ -77,7 +84,7 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
     private boolean mShouldStartPlayback;
     private boolean mControlersVisible;
     private int mDuration;
-    private DisplayMetrics mMetrics;
+    private Bitmap mDefaultNotificationIcon;
 
     private int lastSeekPosition = 0;
 
@@ -99,14 +106,9 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
         actionBar.setStackedBackgroundDrawable(new ColorDrawable(Color.parseColor("#55000000")));
         actionBar.setDisplayShowHomeEnabled(false);
 
-        mMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
-
         loadViews();
         setupController();
         setupControlsCallbacks();
-        startVideoPlayer();
-        updateMetadata(true);
     }
 
     @Override
@@ -116,8 +118,18 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
         MyApplication.getCastManager().registerCastListener(this);
         MyApplication.getCastManager().registerMediaListener(this);
         MyApplication.getCastManager().startDiscovery();
+
+        startVideoPlayer();
+        postWearNotification(mSelectedMovie);
+
+        updateMetadata(true);
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+    }
 
     @Override
     protected void onPause() {
@@ -143,6 +155,8 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
     protected void onDestroy() {
         stopControllersTimer();
         stopSeekBarTimer();
+
+        NotificationManagerCompat.from(this).cancel(NotificationUtil.WEAR_NOTIFICAITON_ID);
         super.onDestroy();
     }
 
@@ -162,27 +176,54 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
 
     private void startVideoPlayer() {
         Bundle b = getIntent().getExtras();
-        long movieId = getIntent().getLongExtra(MovieList.ARG_ITEM_ID, MovieList.INVALID_ID);
-        mSelectedMovie = MovieList.getMovie(movieId);
 
-        if (mSelectedMovie != null) {
-            setTitle(mSelectedMovie.getTitle());
-            mShouldStartPlayback = b.getBoolean(getResources().getString(R.string.should_start));
-            int startPosition = b.getInt(getResources().getString(R.string.start_position), 0);
-            mVideoView.setVideoPath(mSelectedMovie.getVideoUrl());
-            if (mShouldStartPlayback) {
-                mPlaybackState = PlaybackState.PLAYING;
-                updatePlayButton(mPlaybackState);
-                if (startPosition > 0) {
-                    mVideoView.seekTo(startPosition);
-                }
+        long movieId = getIntent().getLongExtra(MovieList.ARG_ITEM_ID, MovieList.INVALID_ID);
+        boolean play = getIntent().getBooleanExtra("play", false);
+        boolean pause = getIntent().getBooleanExtra("pause", false);
+
+        if(play){
+            mPlaybackState = PlaybackState.PLAYING;
+            updatePlayButton(mPlaybackState);
+
+            if(MyApplication.getCastManager().isApplicationStarted()) {
+                MyApplication.getCastManager().playMedia();
+            }else {
                 mVideoView.start();
-                mPlayPause.requestFocus();
-                startControllersTimer();
-            } else {
-                updatePlaybackLocation();
-                mPlaybackState = PlaybackState.PAUSED;
-                updatePlayButton(mPlaybackState);
+            }
+            startControllersTimer();
+        }else if(pause) {
+            if(MyApplication.getCastManager().isApplicationStarted()) {
+                MyApplication.getCastManager().pauseMedia();
+            }else {
+                mVideoView.pause();
+            }
+            mPlaybackState = PlaybackState.PAUSED;
+            updatePlayButton(PlaybackState.PAUSED);
+            stopControllersTimer();
+        }
+
+        if(movieId != MovieList.INVALID_ID) {
+            mSelectedMovie = MovieList.getMovie(movieId);
+
+            if (mSelectedMovie != null) {
+                setTitle(mSelectedMovie.getTitle());
+                mShouldStartPlayback = b.getBoolean(getResources().getString(R.string.should_start));
+                int startPosition = b.getInt(getResources().getString(R.string.start_position), 0);
+                mVideoView.setVideoPath(mSelectedMovie.getVideoUrl());
+                if (mShouldStartPlayback) {
+                    mPlaybackState = PlaybackState.PLAYING;
+                    updatePlayButton(mPlaybackState);
+                    if (startPosition > 0) {
+                        mVideoView.seekTo(startPosition);
+                    }
+                    mVideoView.start();
+                    mPlayPause.requestFocus();
+                    startControllersTimer();
+                } else {
+                    updatePlaybackLocation();
+                    mPlaybackState = PlaybackState.PAUSED;
+                    updatePlayButton(mPlaybackState);
+                }
             }
         }
     }
@@ -299,12 +340,15 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
 
     private void setupController() {
 
-        int w = (int) (mMetrics.widthPixels * MEDIA_BAR_WIDTH);
-        int h = (int) (mMetrics.heightPixels * MEDIA_BAR_HEIGHT);
-        int marginLeft = (int) (mMetrics.widthPixels * MEDIA_BAR_LEFT_MARGIN);
-        int marginTop = (int) (mMetrics.heightPixels * MEDIA_BAR_TOP_MARGIN);
-        int marginRight = (int) (mMetrics.widthPixels * MEDIA_BAR_RIGHT_MARGIN);
-        int marginBottom = (int) (mMetrics.heightPixels * MEDIA_BAR_BOTTOM_MARGIN);
+        final DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+
+        int w = (int) (metrics.widthPixels * MEDIA_BAR_WIDTH);
+        int h = (int) (metrics.heightPixels * MEDIA_BAR_HEIGHT);
+        int marginLeft = (int) (metrics.widthPixels * MEDIA_BAR_LEFT_MARGIN);
+        int marginTop = (int) (metrics.heightPixels * MEDIA_BAR_TOP_MARGIN);
+        int marginRight = (int) (metrics.widthPixels * MEDIA_BAR_RIGHT_MARGIN);
+        int marginBottom = (int) (metrics.heightPixels * MEDIA_BAR_BOTTOM_MARGIN);
         LayoutParams lp = new LayoutParams(w, h);
         lp.setMargins(marginLeft, marginTop, marginRight, marginBottom);
         mControllers.setLayoutParams(lp);
@@ -480,6 +524,16 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
         mContainer = findViewById(R.id.container);
 
         mContainer.setOnClickListener(mPlayPauseHandler);
+
+        try {
+            InputStream is = getAssets().open("tv_users.jpg");
+            mDefaultNotificationIcon = BitmapFactory.decodeStream(is);
+            is.close();
+        } catch (IOException e) {
+            //do nothing
+            mDefaultNotificationIcon
+                    = BitmapFactory.decodeResource(getResources(), R.drawable.example_large_icon);
+        }
     }
 
     private final View.OnClickListener mPlayPauseHandler = new View.OnClickListener() {
@@ -616,4 +670,45 @@ public class PlayerActivity extends ActionBarActivity implements CastListener, M
 
     }
 
+    private void postWearNotification(Movie movie) {
+        //This method should be implemented by codelab attendees
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+
+        builder.setContentTitle("Now Playing")
+                .setContentText(mSelectedMovie.getTitle())
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setLargeIcon(mDefaultNotificationIcon);
+
+        NotificationCompat.Action playpause = new NotificationCompat.Action.Builder(
+                R.drawable.ic_playnstop, getString(R.string.play),
+                NotificationUtil.getPlayOrPausePendingIntent(this, mPlaybackState)).build();
+
+        //builder.addAction(previousAction).addAction(nextAction);
+        NotificationCompat.WearableExtender wearableOptions =
+                new NotificationCompat.WearableExtender();
+
+        wearableOptions.setDisplayIntent(NotificationUtil.getChangeMoviePendingIntent(this, 1));
+
+        NotificationCompat.Action previousAction = new NotificationCompat.Action.Builder(
+                R.drawable.ic_previous,
+                getString(R.string.previous),
+                NotificationUtil.getChangeMoviePendingIntent(this,
+                        MovieList.getPreviousMovie(movie).getId())).build();
+
+        wearableOptions.addAction(playpause);
+        wearableOptions.setContentAction(0);
+
+        NotificationCompat.Action nextAction = new NotificationCompat.Action.Builder(
+                R.drawable.ic_next, getString(R.string.next),
+                NotificationUtil.getChangeMoviePendingIntent(this,
+                        MovieList.getNextMovie(movie).getId())).build();
+        wearableOptions.addAction(previousAction).addAction(nextAction);
+
+        builder.extend(wearableOptions);
+
+        Notification notification = builder.build();
+        NotificationManagerCompat.from(this).notify(
+                NotificationUtil.WEAR_NOTIFICAITON_ID, notification);
+    }
 }

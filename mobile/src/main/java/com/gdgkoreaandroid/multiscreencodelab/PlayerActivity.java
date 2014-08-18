@@ -36,7 +36,6 @@ import android.widget.VideoView;
 
 import com.gdgkoreaandroid.multiscreencodelab.data.Movie;
 import com.gdgkoreaandroid.multiscreencodelab.data.MovieList;
-import com.gdgkoreaandroid.multiscreencodelab.notification.NotificationUtil;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
 
@@ -540,79 +539,19 @@ public class PlayerActivity extends ActionBarActivity {
     }
 
     private void postWearNotification(Movie movie) {
-        builder = new NotificationCompat.Builder(this);
-
-        //Notification의 기본골격 구성하기
         setDefaultNotification(movie);
-        //Wear Notification에 ActionButton넣기
         setActionButton(movie);
-        //Notification의 우선순위 정하기
         setPriority();
-
-        //bonus: RemoteControlClient
-        //bonus: background image
-
-
-        Notification notification = builder.build();
-        NotificationManagerCompat.from(this).notify(WEAR_NOTIFICAITON_ID, notification);
     }
 
     private void setDefaultNotification(Movie movie) {
-        builder.setContentTitle(movie.getTitle())
-                .setContentText(movie.getDescription())
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setDeleteIntent(NotificationUtil.getNotificationDeletePendingIntent(this, R.string.example_action_clicked))
-                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.example_large_icon))
-                .setContentIntent(NotificationUtil.getContentPendingIntent(this, R.string.content_intent_clicked));
+
     }
 
     private void setActionButton(Movie movie) {
-        NotificationCompat.Action previousAction = new NotificationCompat.Action.Builder(
-                R.drawable.ic_previous,
-                getString(R.string.previous),
-                NotificationUtil.getChangeMoviePendingIntent(this,
-                        MovieList.getPreviousMovie(movie).getId())).build();
-
-        NotificationCompat.Action playnstopAction = new NotificationCompat.Action.Builder(
-                R.drawable.ic_playnstop, getString(R.string.playnstop),
-                NotificationUtil.getChangeMoviePendingIntent(this,
-                        MovieList.getNextMovie(movie).getId())).build();
-
-        NotificationCompat.Action nextAction = new NotificationCompat.Action.Builder(
-                R.drawable.ic_next, getString(R.string.next),
-                NotificationUtil.getChangeMoviePendingIntent(this,
-                        MovieList.getNextMovie(movie).getId())).build();
-
-        NotificationCompat.WearableExtender wearableOptions =
-                new NotificationCompat.WearableExtender();
-        wearableOptions.addAction(previousAction).addAction(playnstopAction).addAction(nextAction);
-        builder.extend(wearableOptions);
 
     }
 
     private void setPriority() {
-        builder.setPriority(Notification.PRIORITY_MAX);
-//        Notification 우선순위를 설정하는 인자, 오름차순으로 갈수록 상위에 뜨게되어있음.
-//        Notification.PRIORITY_LOW;
-//        Notification.PRIORITY_MIN;
-//        Notification.PRIORITY_DEFAULT;
-//        Notification.PRIORITY_HIGH;
-//        Notification.PRIORITY_MAX;
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        setIntent(intent);
-
-        if (intent.getAction().equals("com.gdgkoreandroid.multiscreencodelab.play")) {
-            //play movie
-            //update state
-            //update notification (play to puase)
-        } else if (intent.getAction().equals("com.gdgkoreandroid.multiscreencodelab.pause")) {
-            //pause movie
-            //update state
-            //update notification (puase to play)
-        }
     }
 }

@@ -24,19 +24,6 @@ public class NotificationUtil {
                 PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    public static PendingIntent getPlaynStopPendingIntent(Context context, long nextMovieId) {
-
-        Intent intent = new Intent(context, PlayerActivity.class);
-        intent.putExtra(MovieList.ARG_ITEM_ID, nextMovieId);
-        return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-//        Intent intent = new Intent(NotificationIntentReceiver.PLAY)
-//                .setClass(context, NotificationIntentReceiver.class);
-//        return PendingIntent.getBroadcast(context, messageResId /* requestCode */, intent,
-//                PendingIntent.FLAG_UPDATE_CURRENT);
-
-    }
-
     public static PendingIntent getChangeMoviePendingIntent(Context context, long nextMovieId) {
         Intent intent = new Intent(context, PlayerActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);

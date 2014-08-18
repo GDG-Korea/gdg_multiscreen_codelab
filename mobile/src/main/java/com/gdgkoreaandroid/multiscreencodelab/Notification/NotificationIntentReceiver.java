@@ -12,21 +12,12 @@ import com.gdgkoreaandroid.multiscreencodelab.MovieListActivity;
  */
 public class NotificationIntentReceiver extends BroadcastReceiver {
 
-    public static final String SHOW_TOAST = "com.gdgkoreaandroid.multiscreencodelab.SHOW_TOAST";
     public static final String DELETE_NOTIFI = "com.gdgkoreaandroid.multiscreencodelab.DELETE_NOTIFI";
-    public static final String PLAY = "com.gdgkoreaandroid.multiscreencodelab.PLAY";
-    public static final String STOP = "com.gdgkoreaandroid.multiscreencodelab.STOP";
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (intent.getAction().equals(SHOW_TOAST)){
-            Toast.makeText(context,"Test", Toast.LENGTH_SHORT).show();
-        }else if (intent.getAction().equals(DELETE_NOTIFI)){
+        if (intent.getAction().equals(DELETE_NOTIFI)){
             Toast.makeText(context, "Notification is Deleted", Toast.LENGTH_SHORT).show();
-        }else if (intent.getAction().equals(PLAY)){
-
-        }else if (intent.getAction().equals(STOP)){
-
         }
     }
 }

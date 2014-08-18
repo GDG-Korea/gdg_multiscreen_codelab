@@ -599,20 +599,4 @@ public class PlayerActivity extends ActionBarActivity {
 //        Notification.PRIORITY_HIGH;
 //        Notification.PRIORITY_MAX;
     }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        setIntent(intent);
-
-        if (intent.getAction().equals("com.gdgkoreandroid.multiscreencodelab.play")) {
-            //play movie
-            //update state
-            //update notification (play to puase)
-        } else if (intent.getAction().equals("com.gdgkoreandroid.multiscreencodelab.pause")) {
-            //pause movie
-            //update state
-            //update notification (puase to play)
-        }
-    }
 }
